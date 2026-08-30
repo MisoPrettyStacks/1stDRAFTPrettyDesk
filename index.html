@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CaliQDesk — MisoPretty Quant Desk</title>
+<title>CaliQDesk — MisoPretty My Desk</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
 <style>
 :root{
@@ -159,7 +159,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
 <body>
 <div class="desktop">
   <header class="desk-top">
-    <div class="brand"><span class="brand-icon"></span><span>MisoPretty's Quant Desk</span><span class="pill">CALIQDESK // </span></div>
+    <div class="brand"><span class="brand-icon"></span><span>MisoPretty's My Desk</span><span class="pill">CALIQDESK // </span></div>
     <div class="top-actions">
       <span class="pill"><span class="status"></span><span id="dataState">PAPER / LOCAL</span></span>
       <span id="sysClock"></span>
@@ -224,7 +224,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
     </section>
 
     <section id="win-approval" class="window" style="left:1460px;top:0;width:360px;height:330px">
-      <div class="window-header"><div class="window-title"><span class="window-app"></span>SUPERVISING QUANT GATE</div><div class="window-controls"><button onclick="minWin('win-approval')">−</button><button onclick="maxWin('win-approval')">□</button><button onclick="closeWin('win-approval')">×</button></div></div>
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>SUPERVISING My GATE</div><div class="window-controls"><button onclick="minWin('win-approval')">−</button><button onclick="maxWin('win-approval')">□</button><button onclick="closeWin('win-approval')">×</button></div></div>
       <div class="window-body">
         <div class="card"><h3>Approval protocol</h3>
           <label><input class="check" type="checkbox"> Evidence packet attached</label>
@@ -386,7 +386,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
 </div>
 
 <div class="taskbar">
-  <span class="brand-mini">MisoPretty's Quant Desk</span>
+  <span class="brand-mini">MisoPretty's My Desk</span>
   <span id="taskClock" class="pill"></span>
   <button class="task-btn" onclick="showAll()">Show All</button>
   <span id="windowTasks" style="display:flex;gap:6px;align-items:center"></span>
@@ -397,8 +397,9 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
 const state={
   capital:10000,mode:"PAPER",selected:"QNT",z:20,
   files:[],sources:[],audit:[],registry:[],
+  research:{endpoint:"/api/research",status:"idle",lastRun:null,lastError:null,queue:[]},
   universe:[
-    {ticker:"QNT",name:"Quantinuum",sector:"Quantum Computing",price:49.95,fair:58.40,bear:45,bull:96,day:0.84,cycle:"Private / IPO monitor",earnings:"Model queue",investors:"Funding records queue",filings:"SEC / IPO watch"},
+    {ticker:"QNT",name:"Myinuum",sector:"Myum Computing",price:49.95,fair:58.40,bear:45,bull:96,day:0.84,cycle:"Private / IPO monitor",earnings:"Model queue",investors:"Funding records queue",filings:"SEC / IPO watch"},
     {ticker:"ENPH",name:"Enphase Energy",sector:"Solar / Energy",price:37.26,fair:38.10,bear:28,bull:65,day:-0.42,cycle:"Public",earnings:"Estimate queue",investors:"13F / holders",filings:"10-K / 10-Q / 8-K"},
     {ticker:"GOOGL",name:"Alphabet",sector:"Internet / AI",price:346.74,fair:348.50,bear:290,bull:410,day:0.67,cycle:"Public",earnings:"Estimate queue",investors:"13F / holders",filings:"10-K / 10-Q / 8-K"},
     {ticker:"BTC",name:"Bitcoin",sector:"Digital Asset",price:78188,fair:85000,bear:62000,bull:110000,day:0.56,cycle:"N/A",earnings:"N/A",investors:"ETF / ",filings:"Public disclosures"}
@@ -411,6 +412,155 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 function money(n){return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(n)}
 function pct(n){return (n>=0?"+":"")+Number(n).toFixed(2)+"%"}
 function now(){return new Date().toLocaleString()}
+const STORAGE_KEY="caliqdesk.state.v2";
+function persistState(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    $("dataState").textContent="PAPER / LOCAL · SAVED";
+  }catch(e){
+    log("persistence","Could not persist desk state: "+e.message);
+  }
+}
+function restoreState(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return false;
+    const saved=JSON.parse(raw);
+    if(!saved||typeof saved!=="object")return false;
+    Object.keys(saved).forEach(k=>{if(k in state)state[k]=saved[k]});
+    state.files=Array.isArray(state.files)?state.files:[];
+    state.sources=Array.isArray(state.sources)?state.sources:[];
+    state.audit=Array.isArray(state.audit)?state.audit:[];
+    state.registry=Array.isArray(state.registry)?state.registry:[];
+    trading.universe=Array.isArray(trading.universe)?trading.universe.map(x=>Object.assign({dossier:{}},x||{})).filter(x=>x.ticker):[];
+    state.research=Object.assign({endpoint:"/api/research",status:"idle",lastRun:null,lastError:null,queue:[]},state.research||{});
+    return true;
+  }catch(e){
+    console.warn("CaliQDesk state restore failed",e);
+    return false;
+  }
+}
+function normalizeTicker(v){
+  return String(v??"").trim().toUpperCase().replace(/[^A-Z0-9.\-]/g,"").slice(0,12);
+}
+function securityFromRecord(r){
+  if(!r||typeof r!=="object")return null;
+  const ticker=normalizeTicker(r.ticker||r.symbol||r.code||r.security||"");
+  const name=String(r.name||r.company||r.company_name||r.security_name||"").trim();
+  if(!ticker && !name)return null;
+  return {
+    ticker:ticker||("CO-"+name.toUpperCase().replace(/[^A-Z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,10)),
+    name:name||ticker,
+    sector:String(r.sector||r.industry||"Imported security"),
+    price:Number.isFinite(Number(r.price))?Number(r.price):0,
+    fair:Number.isFinite(Number(r.fair))?Number(r.fair):0,
+    bear:Number.isFinite(Number(r.bear))?Number(r.bear):0,
+    bull:Number.isFinite(Number(r.bull))?Number(r.bull):0,
+    day:Number.isFinite(Number(r.day||r.change_24h))?Number(r.day||r.change_24h):0,
+    cycle:String(r.cycle||r.ipo_cycle||"Research required"),
+    earnings:String(r.earnings||"Research required"),
+    investors:String(r.investors||"Research required"),
+    filings:String(r.filings||"Research required"),
+    dossier:r.dossier||r.research||{},
+    imported:true
+  };
+}
+function extractRecords(text){
+  const records=[];
+  const trimmed=String(text||"").trim();
+  if(!trimmed)return records;
+  try{
+    const parsed=JSON.parse(trimmed);
+    const arr=Array.isArray(parsed)?parsed:
+      Array.isArray(parsed.securities)?parsed.securities:
+      Array.isArray(parsed.stocks)?parsed.stocks:
+      Array.isArray(parsed.companies)?parsed.companies:[parsed];
+    arr.forEach(r=>{const s=securityFromRecord(r);if(s)records.push(s)});
+  }catch(_){}
+  const lines=trimmed.split(/\r?\n/);
+  const header=lines[0]?.split(/[,;\t]/).map(x=>x.trim().toLowerCase());
+  if(header&&header.some(x=>["ticker","symbol"].includes(x))){
+    for(let i=1;i<lines.length;i++){
+      const cols=lines[i].split(/[,;\t]/).map(x=>x.trim().replace(/^["']|["']$/g,""));
+      if(!cols.length)continue;
+      const r={};
+      header.forEach((h,j)=>r[h]=cols[j]??"");
+      const s=securityFromRecord(r);if(s)records.push(s);
+    }
+  }
+  // Preserve explicit all-caps tickers in free-form research/watchlists.
+  const tickers=[...new Set((trimmed.match(/\$?[A-Z][A-Z0-9.\-]{1,11}\b/g)||[]).map(x=>normalizeTicker(x.replace(/^\$/,""))))]
+    .filter(t=>t.length>=2 && t.length<=12 && !["THE","AND","FOR","SEC","IPO","ETF","USD","CEO","CFO","EPS","FCF","DCF","EBITDA","NYSE","NASDAQ"].includes(t));
+  tickers.forEach(t=>{if(!records.some(r=>r.ticker===t))records.push(securityFromRecord({ticker:t,name:t}))});
+  return records;
+}
+function mergeSecurity(s){
+  if(!s||!s.ticker)return null;
+  const idx=trading.universe.findIndex(x=>x.ticker===s.ticker);
+  if(idx<0){
+    trading.universe.push(s);
+    return trading.universe[trading.universe.length-1];
+  }
+  const cur=trading.universe[idx];
+  Object.keys(s).forEach(k=>{
+    if(k==="dossier")cur.dossier=Object.assign({},cur.dossier||{},s.dossier||{});
+    else if(s[k]!==undefined && s[k]!=="" && s[k]!==null)cur[k]=s[k];
+  });
+  return cur;
+}
+function dossierRequirements(){
+  return ["OVERVIEW","LIVE MARKET","VALUATION","EARNINGS","IPO / 180D","NEWS / INDUSTRY","GOVERNMENT","LOBBYING / POLITICAL","INVESTORS","FILINGS / TAX","DIRECT SOURCES / FILING","MATH / FORECAST","EVIDENCE"];
+}
+async function researchSecurities(securities,sourceText){
+  const list=securities.filter(Boolean).map(x=>({ticker:x.ticker,name:x.name,sector:x.sector,current:x}));
+  if(!list.length)return;
+  const endpoint=state.research?.endpoint||window.CALIQDESK_RESEARCH_ENDPOINT||"/api/research";
+  state.research.status="researching";state.research.lastError=null;state.research.lastRun=new Date().toISOString();
+  state.research.queue=list.map(x=>x.ticker);persistState();renderUniverse();
+  log("research_agent",`Research requested for ${list.length} security record(s).`);
+  try{
+    const resp=await fetch(endpoint,{
+      method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},
+      body:JSON.stringify({
+        task:"Complete the institutional research dossier for every supplied security. Take initiative to research missing fields using the internet and primary/public sources. Do not invent facts. Preserve source URLs, publisher/issuer, timestamps, filing/document identifiers, evidence quality, and distinguish observed facts, sourced disclosures, assumptions, forecasts and model outputs.",
+        requirements:dossierRequirements(),
+        securities:list,
+        source_payload:sourceText||"",
+        source_urls:[...new Set((String(sourceText||"").match(/https?:\/\/[^\s<>"')\]]+/g)||[]))],
+        response_schema:{
+          securities:[{
+            ticker:"string",name:"string",sector:"string",price:"number|null",fair:"number|null",bear:"number|null",bull:"number|null",day:"number|null",
+            cycle:"string",earnings:"string",investors:"string",filings:"string",
+            dossier:{
+              overview:"object",live_market:"object",valuation:"object",earnings:"object","ipo_180d":"object",
+              news_industry:"object",government:"object",lobbying_political:"object",investors:"array",filings_tax:"object",
+              direct_sources:"array",math_forecast:"object",evidence:"array"
+            }
+          }]
+        }
+      })
+    });
+    if(!resp.ok)throw new Error("Research agent HTTP "+resp.status);
+    const raw=await resp.text();
+    let result;
+    try{result=JSON.parse(raw)}catch(_){
+      // Accept an OpenAI-style response containing JSON in output_text/message content.
+      const candidate=raw.match(/\{[\s\S]*\}/);
+      result=candidate?JSON.parse(candidate[0]):null;
+    }
+    const researched=Array.isArray(result?.securities)?result.securities:
+      Array.isArray(result?.data?.securities)?result.data.securities:[];
+    if(!researched.length)throw new Error("Research agent returned no structured securities.");
+    researched.forEach(r=>mergeSecurity(securityFromRecord(r)||r));
+    state.research.status="complete";state.research.queue=[];
+    persistState();renderUniverse();renderFiles();
+    log("research_agent",`Research completed and merged for ${researched.length} security record(s).`);persistState();
+  }catch(e){
+    state.research.status="error";state.research.lastError=e.message;
+    persistState();log("research_agent","Research agent unavailable: "+e.message);persistState();
+    // The payload remains saved/indexed; unresolved dossier fields stay explicitly marked Research required.
+  }
+}
 function log(agent,msg){
   state.audit.push({t:new Date().toISOString(),agent,msg});
   const line=`<div><span class="time">[${new Date().toLocaleTimeString()}]</span> <span class="agent">${esc(agent).toUpperCase()}</span> ${esc(msg)}</div>`;
@@ -475,13 +625,13 @@ async function loadCrypto(){
     if(!r.ok)throw new Error("CoinGecko HTTP "+r.status);
     const data=await r.json();
     state.crypto=data;renderMarket(data);log("markets","CoinGecko live crypto snapshot loaded.");
-  }catch(e){renderMarket(state.universe.filter(x=>x.ticker==="BTC").map(x=>({name:x.name,symbol:"BTC",current_price:x.price,price_change_percentage_24h:x.day,market_cap:0})));log("markets","Live crypto request unavailable: "+e.message)}
+  }catch(e){renderMarket(trading.universe.filter(x=>x.ticker==="BTC").map(x=>({name:x.name,symbol:"BTC",current_price:x.price,price_change_percentage_24h:x.day,market_cap:0})));log("markets","Live crypto request unavailable: "+e.message)}
 }
 function renderMarket(data){
   $("marketList").innerHTML=`<table><thead><tr><th>Asset</th><th>Price</th><th>24h</th><th>Mkt Cap</th></tr></thead><tbody>`+
   data.map(x=>`<tr class="clickable" onclick="openResearch('${esc((x.symbol||x.ticker||"").toUpperCase())}')"><td><b>${esc(x.name)}</b> ${esc((x.symbol||"").toUpperCase())}</td><td>${money(x.current_price||x.price||0)}</td><td class="${(x.price_change_percentage_24h||x.day||0)>=0?'good':'bad'}">${pct(x.price_change_percentage_24h||x.day||0)}</td><td>${x.market_cap?money(x.market_cap):"—"}</td></tr>`).join("")+"</tbody></table>";
 }
-function marketTab(type,btn){document.querySelectorAll("#win-markets .tabbar button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");if(type==="crypto")loadCrypto();else{const arr=state.universe.filter(x=>type==="equities"?x.ticker!=="BTC":x.ticker==="BTC");renderMarket(arr.map(x=>({name:x.name,symbol:x.ticker,current_price:x.price,price_change_percentage_24h:x.day,market_cap:0})));log("markets",type+" market view selected; live equity/commodity feeds require configured source.");}}
+function marketTab(type,btn){document.querySelectorAll("#win-markets .tabbar button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");if(type==="crypto")loadCrypto();else{const arr=trading.universe.filter(x=>type==="equities"?x.ticker!=="BTC":x.ticker==="BTC");renderMarket(arr.map(x=>({name:x.name,symbol:x.ticker,current_price:x.price,price_change_percentage_24h:x.day,market_cap:0})));log("markets",type+" market view selected; live equity/commodity feeds require configured source.");}}
 function filterMarket(){const q=$("marketSearch").value.toLowerCase();document.querySelectorAll("#marketList tbody tr").forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?"":"none")}
 
 async function runPaperTest(){
@@ -515,13 +665,13 @@ function chartOpts(){return{responsive:true,maintainAspectRatio:false,plugins:{l
 function addDirectSource(){
   const name=$("sourceName").value.trim(),url=$("sourceUrl").value.trim();
   if(!name||!url)return alert("Enter a source name and URL.");
-  state.sources.push({name,url,added:new Date().toISOString()});$("sourceName").value="";$("sourceUrl").value="";renderDirectSources();log("sources","Direct source added: "+name)
+  state.sources.push({name,url,added:new Date().toISOString()});$("sourceName").value="";$("sourceUrl").value="";renderDirectSources();persistState();log("sources","Direct source added: "+name)
 }
 function renderDirectSources(){
   $("directSourceList").innerHTML=state.sources.length?state.sources.map((s,i)=>`<div class="source-item"><b>${esc(s.name)}</b><br><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a><br><button style="margin-top:5px" onclick="removeSource(${i})">Remove</button></div>`).join(""):`<div class="notice">No direct sources attached.</div>`;
   $("sourceCount").textContent=state.sources.length;
 }
-function removeSource(i){state.sources.splice(i,1);renderDirectSources();log("sources","Removed direct source.")}
+function removeSource(i){state.sources.splice(i,1);renderDirectSources();persistState();log("sources","Removed direct source.")}
 function analyzeSourceText(){
   const t=$("sourceText").value.trim();if(!t)return alert("Paste source text first.");
   const words=t.toLowerCase(),flags=[];
@@ -536,14 +686,14 @@ function calcSize(){
   $("sizeResult").innerHTML=`<b>Risk budget:</b> ${money(riskDollars)}<br><b>Per-unit risk:</b> ${money(unitRisk)}<br><b>Exact position size:</b> ${qty.toFixed(6)} units<br><b>Notional:</b> ${money(notional)}<br><span class="small">Formula: risk budget ÷ absolute entry-to-stop distance.</span>`;
   log("risk_engine",`Calculated ${qty.toFixed(6)} units for ${$("positionLabel").value}.`);
 }
-function sendApproval(){$("approvalMsg").textContent="Position packet sent to supervising quant gate.";$("approvalMsg").className="notice mint";log("approval","Risk-sized packet submitted for approval.")}
+function sendApproval(){$("approvalMsg").textContent="Position packet sent to supervising My gate.";$("approvalMsg").className="notice mint";log("approval","Risk-sized packet submitted for approval.")}
 function approvePacket(){$("approvalMsg").textContent="APPROVED — packet marked spawnable in local paper registry.";$("approvalMsg").className="notice mint";$("approvalCount").textContent=Number($("approvalCount").textContent)+1;log("approval","Packet approved locally.")}
 function rejectPacket(){$("approvalMsg").textContent="REJECTED — packet returned for evidence or risk review.";$("approvalMsg").className="notice danger";log("approval","Packet rejected by local gate.")}
 
 function exportRegistry(){
   const blob=new Blob([JSON.stringify(state.registry,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="caliqdesk-strategy-registry.json";a.click();URL.revokeObjectURL(a.href);log("registry","Registry JSON exported.")
 }
-function clearRegistry(){state.registry=[];renderRegistry();log("registry","Strategy registry cleared.")}
+function clearRegistry(){state.registry=[];renderRegistry();persistState();log("registry","Strategy registry cleared.")}
 function renderRegistry(){$("registryList").innerHTML=state.registry.length?state.registry.map(x=>`<div class="source-item"><b>${esc(x.label)}</b><br>${esc(x.size)}</div>`).join(""):`<div class="notice">No strategy packets yet.</div>`;$("registryCount").textContent=state.registry.length}
 
 function ingestText(){
@@ -551,18 +701,49 @@ function ingestText(){
   addFile("Manual research payload",v);$("rawPayloadInput").value="";
 }
 function addFile(name,text){
-  const symbols=[...new Set((text.match(/\b[A-Z]{1,6}\b/g)||[]).filter(x=>x.length>=2))];
-  state.files.push({name,size:text.length,symbols,preview:text.slice(0,400)});
-  renderFiles();log("ingestion",`${name}: indexed ${text.length.toLocaleString()} characters${symbols.length?" · symbols "+symbols.join(", "):""}`);buildCompiledLists();
+  const fullText=String(text??"");
+  const records=extractRecords(fullText);
+  const symbols=[...new Set(records.map(x=>x.ticker).concat((fullText.match(/\$?[A-Z][A-Z0-9.\-]{1,11}\b/g)||[]).map(x=>normalizeTicker(x.replace(/^\$/,"")))).filter(Boolean))];
+  state.files.push({
+    id:crypto.randomUUID?crypto.randomUUID():"file-"+Date.now()+"-"+Math.random().toString(36).slice(2),
+    name,size:fullText.length,symbols,preview:fullText.slice(0,400),text:fullText,
+    parsedAt:new Date().toISOString(),records:records.map(x=>x.ticker)
+  });
+  const merged=records.map(mergeSecurity).filter(Boolean);
+  const urls=[...new Set((fullText.match(/https?:\/\/[^\s<>"')\]]+/g)||[]))];
+  urls.forEach(url=>{
+    if(!state.sources.some(s=>s.url===url))state.sources.push({name:`Ingested source · ${name}`,url,added:new Date().toISOString(),fromFile:name});
+  });
+  renderFiles();renderUniverse();renderDirectSources();persistState();
+  log("ingestion",`${name}: saved and parsed ${fullText.length.toLocaleString()} characters${symbols.length?" · symbols "+symbols.join(", "):""}${merged.length?" · compiled "+merged.length+" security record(s)":""}`);
+  buildCompiledLists();
+  if(merged.length)researchSecurities(merged,fullText);
 }
 function renderFiles(){$("fileList").innerHTML=state.files.length?state.files.map((f,i)=>`<div class="file-row"><span><b>${esc(f.name)}</b><br><span class="small">${esc(f.symbols.join(", ")||"No obvious symbols")}</span></span><span>${f.size.toLocaleString()} chars<br><button onclick="removeFile(${i})">×</button></span></div>`).join(""):`<div class="notice">No source files indexed yet.</div>`}
-function removeFile(i){state.files.splice(i,1);renderFiles();buildCompiledLists();log("ingestion","Removed indexed file.")}
-function clearFiles(){state.files=[];renderFiles();log("ingestion","Local file index cleared.")}
+function removeFile(i){state.files.splice(i,1);renderFiles();buildCompiledLists();persistState();log("ingestion","Removed indexed file.")}
+function clearFiles(){state.files=[];renderFiles();buildCompiledLists();persistState();log("ingestion","Local file index cleared.")}
 async function handleFiles(files){
   for(const f of files){
     try{
-      if(f.name.toLowerCase().endsWith(".pdf")||f.name.toLowerCase().endsWith(".docx")){
-        addFile(f.name,`[BINARY DOCUMENT: ${f.name}] Browser text extraction for this format is not enabled in this single-file build. Keep the file attached and use the original document as the source.`);
+      const lower=f.name.toLowerCase();
+      if(lower.endsWith(".pdf")){
+        if(window.pdfjsLib){
+          const buf=await f.arrayBuffer(),pdf=await pdfjsLib.getDocument({data:buf}).promise,parts=[];
+          for(let pageNo=1;pageNo<=pdf.numPages;pageNo++){
+            const page=await pdf.getPage(pageNo),content=await page.getTextContent();
+            parts.push(content.items.map(i=>i.str).join(" "));
+          }
+          addFile(f.name,parts.join("\n"));
+        }else{
+          addFile(f.name,`[PDF EXTRACTION UNAVAILABLE: ${f.name}] Configure the PDF.js dependency for browser-side extraction.`);
+        }
+      }else if(lower.endsWith(".docx")){
+        if(window.mammoth){
+          const buf=await f.arrayBuffer(),res=await mammoth.extractRawText({arrayBuffer:buf});
+          addFile(f.name,res.value);
+        }else{
+          addFile(f.name,`[DOCX EXTRACTION UNAVAILABLE: ${f.name}] Configure the Mammoth dependency for browser-side extraction.`);
+        }
       }else{
         const text=await f.text();addFile(f.name,text);
       }
@@ -573,12 +754,13 @@ $("fileInput").addEventListener("change",e=>handleFiles(e.target.files));
 const dz=$("dropzone");["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag")}));["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag")}));dz.addEventListener("drop",e=>handleFiles(e.dataTransfer.files));
 
 function buildCompiledLists(){
-  const upper=state.files.map(x=>x.preview).join("\n").toUpperCase();
-  const hits=state.universe.filter(x=>upper.includes(x.ticker));
+  const upper=state.files.map(x=>x.text||x.preview||"").join("\n").toUpperCase();
+  const hits=trading.universe.filter(x=>upper.includes(x.ticker));
+  $("securityCount").textContent=trading.universe.length;
   if(hits.length)log("compiled_lists","Tracked symbols detected: "+hits.map(x=>x.ticker).join(", "));
 }
 function renderUniverse(){
-  $("universeBody").innerHTML=state.universe.map(x=>`<tr class="clickable" onclick="openResearch('${x.ticker}')">
+  $("universeBody").innerHTML=trading.universe.map(x=>`<tr class="clickable" onclick="openResearch('${x.ticker}')">
     <td><b>${x.ticker}</b><br>${esc(x.name)}<br><span class="small">${esc(x.sector)}</span></td>
     <td>${money(x.price)}<br><span class="${x.day>=0?'good':'bad'}">${pct(x.day)}</span></td>
     <td><b>${money(x.fair)}</b><br><span class="${x.fair>=x.price?'good':'bad'}">${pct((x.fair/x.price-1)*100)}</span></td>
@@ -605,45 +787,59 @@ function researchTabsFor(x){
   $("researchTabs").innerHTML=tabs.map((t,i)=>`<button class="${i===0?"active":""}" onclick="researchTab('${t}',this)">${t}</button>`).join("");
 }
 function openResearch(ticker){
-  let x=state.universe.find(z=>z.ticker===ticker)||state.universe.find(z=>z.ticker==="BTC");
-  if(!x)x={ticker,name:ticker,sector:"Imported security",price:0,fair:0,bear:0,bull:0,day:0,cycle:"Research required",earnings:"Research required",investors:"Research required",filings:"Research required"};
+  let x=trading.universe.find(z=>z.ticker===ticker)||trading.universe.find(z=>z.ticker==="BTC");
+  if(!x){
+    x={ticker:normalizeTicker(ticker)||String(ticker||"UNKNOWN"),name:normalizeTicker(ticker)||String(ticker||"Unknown security"),sector:"Imported security",price:0,fair:0,bear:0,bull:0,day:0,cycle:"Research required",earnings:"Research required",investors:"Research required",filings:"Research required",dossier:{}};
+    mergeSecurity(x);
+  }
   state.selected=x.ticker;$("modalTitle").textContent=`${x.ticker} — ${x.name}`;$("modalSub").textContent=`${x.sector} ·  research dossier`;
   researchTabsFor(x);$("researchModal").classList.add("open");researchTab("OVERVIEW",$("researchTabs").firstElementChild);log("research","Opened dossier for "+x.ticker)
 }
 function closeResearch(){if(charts.detail){charts.detail.destroy();charts.detail=null}$("researchModal").classList.remove("open")}
 function box(title,html){return `<div class="card" style="margin-bottom:10px"><h3>${title}</h3>${html}</div>`}
 function metric(label,value,tip){return `<div class="kpi"><div class="k-label ${tip?'tooltip':''}" ${tip?`data-tip="${esc(tip)}"`:""}>${label}</div><div class="k-value">${value}</div></div>`}
+function dossierFor(x,key){
+  const d=x?.dossier||{};
+  return d[key]||d[key.replace(/ /g,"_").toLowerCase()]||null;
+}
+function researchedBlock(x,key){
+  const d=dossierFor(x,key);
+  if(!d)return "";
+  const json=typeof d==="string"?d:JSON.stringify(d,null,2);
+  return box("Agent research",`<pre class="small" style="white-space:pre-wrap">${esc(json)}</pre>`);
+}
 function researchTab(tab,btn){
   document.querySelectorAll("#researchTabs button").forEach(b=>b.classList.remove("active"));btn?.classList.add("active");
-  const x=state.universe.find(z=>z.ticker===state.selected)||state.universe[0],c=$("researchContent");
-  if(tab==="OVERVIEW")c.innerHTML=`<div class="dossier-grid">${metric("Public price",money(x.price),"Observed market price when connected.")}${metric("Model value",money(x.fair),"Internal valuation estimate; assumptions must be sourced.")}${metric("Upside / gap",pct((x.fair/x.price-1)*100))}${metric("Risk band",money(x.bear)+" — "+money(x.bull))}</div>${box(" summary",`<div class="notice info">This dossier separates observed facts, sourced disclosures and mathematical model outputs. Unknown information is explicitly marked as research required.</div><p class="small">For an actual investment-grade report, connect approved market/news/filing sources and preserve source timestamps and document identifiers.</p>`)}`;
-  else if(tab==="LIVE MARKET")c.innerHTML=box("Live Market Data",`<div class="dossier-grid">${metric("Last",money(x.price))}${metric("24h",pct(x.day))}${metric("Bid / Ask","Feed required")}${metric("Volume","Feed required")}</div><div class="chart" style="height:350px"><canvas id="detailChart"></canvas></div>`);
-  else if(tab==="VALUATION")c.innerHTML=box("Valuation Stack",`<table><thead><tr><th>Method</th><th>Value</th><th>Formula / assumptions</th><th>Status</th></tr></thead><tbody><tr><td>Public market</td><td>${money(x.price)}</td><td>Observed quote</td><td>Observed</td></tr><tr><td>DCF</td><td>${money(x.price*1.12)}</td><td>PV of FCF + terminal value</td><td>Illustrative</td></tr><tr><td>Relative</td><td>${money(x.price*1.17)}</td><td>Peer multiples</td><td>Illustrative</td></tr><tr><td>Composite</td><td>${money(x.fair)}</td><td>Weighted model output</td><td>Model</td></tr></tbody></table>`);
-  else if(tab==="EARNINGS")c.innerHTML=box("Projected Earnings",`<div class="dossier-grid">${metric("Revenue","Connect financial feed")}${metric("EPS","Connect estimates")}${metric("FCF","Connect filings")}${metric("Next report","Calendar feed")}</div><div class="notice">Projected earnings must be driven by sourced historical financials, explicit assumptions, scenario probabilities and a versioned forecast model. The dashboard does not silently fabricate company estimates.</div>`);
-  else if(tab==="IPO / 180D")c.innerHTML=box("IPO / Lockup Cycle",`<div class="dossier-grid">${metric("Cycle",x.cycle)}${metric("Day 180","Event date required")}${metric("Float change","Filing required")}${metric("Insider selling","Form 4 / prospectus")}</div><div class="chart small"><canvas id="detailChart"></canvas></div>`);
-  else if(tab==="NEWS / INDUSTRY")c.innerHTML=box("Latest News / Industry Impact",`<div class="notice info">Live headlines require a connected news provider. This panel is intentionally evidence-first: each headline should retain publisher, timestamp, URL and relevance classification.</div><ul><li>Company-specific news</li><li>Industry demand / pricing</li><li>Competitor developments</li><li>Supply-chain and macro events</li><li>Geopolitical / infrastructure exposure</li></ul>`);
-  else if(tab==="GOVERNMENT")c.innerHTML=box("Government / Legislation",`<div class="dossier-grid">${metric("SEC","Filings / enforcement")}${metric("Congress","Bills / committees")}${metric("Agencies","Rules / actions")}${metric("Contracts","Procurement records")}</div><div class="notice">Government exposure should be tied to official records: bill text, committee action, final rules, agency notices, procurement records and enforcement releases.</div>`);
-  else if(tab==="LOBBYING / POLITICAL")c.innerHTML=box("Lobbying / Political Disclosures",`<div class="notice danger"><b>Evidence standard:</b> a campaign donation, lobbying registration or political association does not by itself establish intent or causality.</div><ul><li>Registered lobbyists / clients</li><li>Lobbying issues and filings</li><li>FEC receipts / disbursements where applicable</li><li>Corporate PAC disclosures</li><li>Known executives / donors based on public records</li></ul>`);
-  else if(tab==="INVESTORS")c.innerHTML=box("Known Investors / Funds / Institutions",`<table><thead><tr><th>Phase</th><th>Investor / fund</th><th>Association</th><th>Evidence</th></tr></thead><tbody><tr><td>Seed</td><td>Research queue</td><td>Funding participant</td><td>Company announcement / Form D</td></tr><tr><td>Growth</td><td>Research queue</td><td>Institution / fund</td><td>Funding announcement</td></tr><tr><td>Public</td><td>Research queue</td><td> holder</td><td>13F / beneficial ownership</td></tr></tbody></table>`);
-  else if(tab==="FILINGS / TAX")c.innerHTML=box("SEC / Government Forms",`<div class="dossier-grid">${metric("10-K","Annual")}${metric("10-Q","Quarterly")}${metric("8-K","Material events")}${metric("Form 4","Insiders")}${metric("13D / 13G","Ownership")}${metric("13F","Institutions")}${metric("S-1","IPO / registration")}${metric("DEF 14A","Proxy")}</div>`)+box("IRS / Tax reality",`Corporate federal income-tax returns (IRS Form 1120 and related returns) are generally not public records. Publicly analyzable tax evidence usually comes from SEC tax footnotes, effective tax rate, cash taxes, deferred tax assets/liabilities, NOLs, credits and disclosed disputes.`);
-  else if(tab==="DIRECT SOURCES / FILING")c.innerHTML=box("Direct Sources Attached",state.sources.length?state.sources.map(s=>`<div class="source-item"><b>${esc(s.name)}</b><br><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a></div>`).join(""):`<div class="notice">No direct sources attached yet. Add them in the DIRECT SOURCES / FILING desktop window.</div>`);
-  else if(tab==="MATH / FORECAST")c.innerHTML=box("Mathematical Forecast Engine",`<p><b>DCF:</b> V = Σ FCFₜ/(1+WACC)ᵗ + TV/(1+WACC)ⁿ.</p><p><b>Scenario EV:</b> P(bear)·R(bear) + P(base)·R(base) + P(bull)·R(bull).</p><p><b>Position sizing:</b> Risk budget ÷ |entry − stop|.</p><p><b>Brier score:</b> mean((probability − outcome)²); lower is better.</p><div class="notice info">The math is deterministic once assumptions are supplied. The uncertainty is in the inputs, probabilities and model specification.</div>`);
-  else c.innerHTML=box("Evidence & Lineage",`<table><tr><th>Field</th><th>Required evidence</th></tr><tr><td>Fact</td><td>Primary source / filing / timestamp</td></tr><tr><td>Forecast</td><td>Historical data + assumptions + model version</td></tr><tr><td>Political claim</td><td>Official disclosure / public record</td></tr><tr><td>Investor claim</td><td>Funding announcement / filing / ownership report</td></tr></table>`);
+  const x=trading.universe.find(z=>z.ticker===state.selected)||trading.universe[0],c=$("researchContent");
+  if(tab==="OVERVIEW")c.innerHTML=`<div class="dossier-grid">${metric("Public price",money(x.price),"Observed market price when connected.")}${metric("Model value",money(x.fair),"Internal valuation estimate; assumptions must be sourced.")}${metric("Upside / gap",pct(x.price?((x.fair/x.price-1)*100):0))}${metric("Risk band",money(x.bear)+" — "+money(x.bull))}</div>${box(" summary",`<div class="notice info">This dossier separates observed facts, sourced disclosures and mathematical model outputs. Unknown information is explicitly marked as research required.</div><p class="small">For an actual investment-grade report, connect approved market/news/filing sources and preserve source timestamps and document identifiers.</p>`)}${researchedBlock(x,"overview")}`;
+  else if(tab==="LIVE MARKET")c.innerHTML=box("Live Market Data",`<div class="dossier-grid">${metric("Last",money(x.price))}${metric("24h",pct(x.day))}${metric("Bid / Ask","Feed required")}${metric("Volume","Feed required")}</div><div class="chart" style="height:350px"><canvas id="detailChart"></canvas></div>`) + researchedBlock(x,"live_market");
+  else if(tab==="VALUATION")c.innerHTML=box("Valuation Stack",`<table><thead><tr><th>Method</th><th>Value</th><th>Formula / assumptions</th><th>Status</th></tr></thead><tbody><tr><td>Public market</td><td>${money(x.price)}</td><td>Observed quote</td><td>Observed</td></tr><tr><td>DCF</td><td>${money(x.price*1.12)}</td><td>PV of FCF + terminal value</td><td>Illustrative</td></tr><tr><td>Relative</td><td>${money(x.price*1.17)}</td><td>Peer multiples</td><td>Illustrative</td></tr><tr><td>Composite</td><td>${money(x.fair)}</td><td>Weighted model output</td><td>Model</td></tr></tbody></table>`) + researchedBlock(x,"valuation");
+  else if(tab==="EARNINGS")c.innerHTML=box("Projected Earnings",`<div class="dossier-grid">${metric("Revenue","Connect financial feed")}${metric("EPS","Connect estimates")}${metric("FCF","Connect filings")}${metric("Next report","Calendar feed")}</div><div class="notice">Projected earnings must be driven by sourced historical financials, explicit assumptions, scenario probabilities and a versioned forecast model. The dashboard does not silently fabricate company estimates.</div>`) + researchedBlock(x,"earnings");
+  else if(tab==="IPO / 180D")c.innerHTML=box("IPO / Lockup Cycle",`<div class="dossier-grid">${metric("Cycle",x.cycle)}${metric("Day 180","Event date required")}${metric("Float change","Filing required")}${metric("Insider selling","Form 4 / prospectus")}</div><div class="chart small"><canvas id="detailChart"></canvas></div>`) + researchedBlock(x,"ipo_180d");
+  else if(tab==="NEWS / INDUSTRY")c.innerHTML=box("Latest News / Industry Impact",`<div class="notice info">Live headlines require a connected news provider. This panel is intentionally evidence-first: each headline should retain publisher, timestamp, URL and relevance classification.</div><ul><li>Company-specific news</li><li>Industry demand / pricing</li><li>Competitor developments</li><li>Supply-chain and macro events</li><li>Geopolitical / infrastructure exposure</li></ul>`) + researchedBlock(x,"news_industry");
+  else if(tab==="GOVERNMENT")c.innerHTML=box("Government / Legislation",`<div class="dossier-grid">${metric("SEC","Filings / enforcement")}${metric("Congress","Bills / committees")}${metric("Agencies","Rules / actions")}${metric("Contracts","Procurement records")}</div><div class="notice">Government exposure should be tied to official records: bill text, committee action, final rules, agency notices, procurement records and enforcement releases.</div>`) + researchedBlock(x,"government");
+  else if(tab==="LOBBYING / POLITICAL")c.innerHTML=box("Lobbying / Political Disclosures",`<div class="notice danger"><b>Evidence standard:</b> a campaign donation, lobbying registration or political association does not by itself establish intent or causality.</div><ul><li>Registered lobbyists / clients</li><li>Lobbying issues and filings</li><li>FEC receipts / disbursements where applicable</li><li>Corporate PAC disclosures</li><li>Known executives / donors based on public records</li></ul>`) + researchedBlock(x,"lobbying_political");
+  else if(tab==="INVESTORS")c.innerHTML=box("Known Investors / Funds / Institutions",`<table><thead><tr><th>Phase</th><th>Investor / fund</th><th>Association</th><th>Evidence</th></tr></thead><tbody><tr><td>Seed</td><td>Research queue</td><td>Funding participant</td><td>Company announcement / Form D</td></tr><tr><td>Growth</td><td>Research queue</td><td>Institution / fund</td><td>Funding announcement</td></tr><tr><td>Public</td><td>Research queue</td><td> holder</td><td>13F / beneficial ownership</td></tr></tbody></table>`) + researchedBlock(x,"investors");
+  else if(tab==="FILINGS / TAX")c.innerHTML=box("SEC / Government Forms",`<div class="dossier-grid">${metric("10-K","Annual")}${metric("10-Q","Quarterly")}${metric("8-K","Material events")}${metric("Form 4","Insiders")}${metric("13D / 13G","Ownership")}${metric("13F","Institutions")}${metric("S-1","IPO / registration")}${metric("DEF 14A","Proxy")}</div>`)+box("IRS / Tax reality",`Corporate federal income-tax returns (IRS Form 1120 and related returns) are generally not public records. Publicly analyzable tax evidence usually comes from SEC tax footnotes, effective tax rate, cash taxes, deferred tax assets/liabilities, NOLs, credits and disclosed disputes.`)+researchedBlock(x,"filings_tax");
+  else if(tab==="DIRECT SOURCES / FILING")c.innerHTML=box("Direct Sources Attached",state.sources.length?state.sources.map(s=>`<div class="source-item"><b>${esc(s.name)}</b><br><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a></div>`).join(""):`<div class="notice">No direct sources attached yet. Add them in the DIRECT SOURCES / FILING desktop window.</div>`)+researchedBlock(x,"direct_sources");
+  else if(tab==="MATH / FORECAST")c.innerHTML=box("Mathematical Forecast Engine",`<p><b>DCF:</b> V = Σ FCFₜ/(1+WACC)ᵗ + TV/(1+WACC)ⁿ.</p><p><b>Scenario EV:</b> P(bear)·R(bear) + P(base)·R(base) + P(bull)·R(bull).</p><p><b>Position sizing:</b> Risk budget ÷ |entry − stop|.</p><p><b>Brier score:</b> mean((probability − outcome)²); lower is better.</p><div class="notice info">The math is deterministic once assumptions are supplied. The uncertainty is in the inputs, probabilities and model specification.</div>`)+researchedBlock(x,"math_forecast");
+  else c.innerHTML=box("Evidence & Lineage",`<table><tr><th>Field</th><th>Required evidence</th></tr><tr><td>Fact</td><td>Primary source / filing / timestamp</td></tr><tr><td>Forecast</td><td>Historical data + assumptions + model version</td></tr><tr><td>Political claim</td><td>Official disclosure / public record</td></tr><tr><td>Investor claim</td><td>Funding announcement / filing / ownership report</td></tr></table>`)+researchedBlock(x,"evidence");
   if((tab==="LIVE MARKET"||tab==="IPO / 180D")&&$("detailChart")){
     const vals=[x.price*.92,x.price*.96,x.price*.99,x.price,x.fair,x.fair*1.08,x.bull];
     charts.detail=new Chart($("detailChart"),{type:"line",data:{labels:["-90D","-60D","-30D","NOW","+30D","+90D","+180D"],datasets:[{label:x.ticker+" market/model path",data:vals,borderColor:"#ff62b5",backgroundColor:"rgba(255,98,181,.13)",fill:true,tension:.25}]},options:chartOpts()});
   }
 }
 
-function saveSnapshot(){localStorage.setItem("caliqdesk.snapshot",JSON.stringify({state,at:new Date().toISOString()}));log("audit","Desk state snapshot saved locally.")}
+function saveSnapshot(){localStorage.setItem("caliqdesk.snapshot",JSON.stringify({state,at:new Date().toISOString()}));persistState();log("audit","Desk state snapshot saved locally.")}
 function clearAudit(){state.audit=[];$("terminal").innerHTML="";$("terminal2").innerHTML="";$("auditCount").textContent="0";log("audit","Audit log cleared.")}
 function approveIfReady(){}
 
 function openWorldMonitor(){window.open("https://finance.worldmonitor.app/dashboard?zoom=1.00&view=global&timeRange=7d&layers=pipelines%2Csanctions%2Cweather%2Ceconomic%2Cwaterways%2Coutages%2Cnatural%2CtradeRoutes","_blank","noopener")}
 $("worldFrame").addEventListener("error",()=>{$("worldFallback").classList.add("show")});
 
-renderUniverse();renderFiles();renderDirectSources();renderRegistry();initAnalytics();buildWindowTasks();loadCrypto();
-log("orchestrator","Screenshot-style MisoPretty Quant Desk initialized.");
+const restored=restoreState();
+renderUniverse();renderFiles();renderDirectSources();renderRegistry();initAnalytics();buildWindowTasks();buildCompiledLists();loadCrypto();
+log("orchestrator",restored?"Persisted CaliQDesk state restored.":"Screenshot-style MisoPretty My Desk initialized.");
 log("ingestion","Browser file ingestion is enabled for text-based files; pasted content is accepted.");
 log("sources","DIRECT SOURCES / FILING window online.");
 log("research","Click any security in the compiled universe to open the  dossier.");
