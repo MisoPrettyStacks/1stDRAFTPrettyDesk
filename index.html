@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MisoPretty - My Desk</title>
+<title>CaliQDesk — MisoPretty Quant Desk</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
 <style>
 :root{
@@ -159,7 +159,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
 <body>
 <div class="desktop">
   <header class="desk-top">
-    <div class="brand"><span class="brand-icon"></span><span>MisoPretty's My Desk</span><span class="pill">CALIQDESK // </span></div>
+    <div class="brand"><span class="brand-icon"></span><span>MisoPretty's Quant Desk</span><span class="pill">CALIQDESK // </span></div>
     <div class="top-actions">
       <span class="pill"><span class="status"></span><span id="dataState">PAPER / LOCAL</span></span>
       <span id="sysClock"></span>
@@ -224,7 +224,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
     </section>
 
     <section id="win-approval" class="window" style="left:1460px;top:0;width:360px;height:330px">
-      <div class="window-header"><div class="window-title"><span class="window-app"></span>SUPERVISING My GATE</div><div class="window-controls"><button onclick="minWin('win-approval')">−</button><button onclick="maxWin('win-approval')">□</button><button onclick="closeWin('win-approval')">×</button></div></div>
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>SUPERVISING QUANT GATE</div><div class="window-controls"><button onclick="minWin('win-approval')">−</button><button onclick="maxWin('win-approval')">□</button><button onclick="closeWin('win-approval')">×</button></div></div>
       <div class="window-body">
         <div class="card"><h3>Approval protocol</h3>
           <label><input class="check" type="checkbox"> Evidence packet attached</label>
@@ -386,7 +386,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
 </div>
 
 <div class="taskbar">
-  <span class="brand-mini">MisoPretty's My Desk</span>
+  <span class="brand-mini">MisoPretty's Quant Desk</span>
   <span id="taskClock" class="pill"></span>
   <button class="task-btn" onclick="showAll()">Show All</button>
   <span id="windowTasks" style="display:flex;gap:6px;align-items:center"></span>
@@ -399,7 +399,7 @@ const state={
   files:[],sources:[],audit:[],registry:[],
   research:{endpoint:"/api/research",status:"idle",lastRun:null,lastError:null,queue:[]},
   universe:[
-    {ticker:"QNT",name:"Myinuum",sector:"Myum Computing",price:49.95,fair:58.40,bear:45,bull:96,day:0.84,cycle:"Private / IPO monitor",earnings:"Model queue",investors:"Funding records queue",filings:"SEC / IPO watch"},
+    {ticker:"QNT",name:"Quantinuum",sector:"Quantum Computing",price:49.95,fair:58.40,bear:45,bull:96,day:0.84,cycle:"Private / IPO monitor",earnings:"Model queue",investors:"Funding records queue",filings:"SEC / IPO watch"},
     {ticker:"ENPH",name:"Enphase Energy",sector:"Solar / Energy",price:37.26,fair:38.10,bear:28,bull:65,day:-0.42,cycle:"Public",earnings:"Estimate queue",investors:"13F / holders",filings:"10-K / 10-Q / 8-K"},
     {ticker:"GOOGL",name:"Alphabet",sector:"Internet / AI",price:346.74,fair:348.50,bear:290,bull:410,day:0.67,cycle:"Public",earnings:"Estimate queue",investors:"13F / holders",filings:"10-K / 10-Q / 8-K"},
     {ticker:"BTC",name:"Bitcoin",sector:"Digital Asset",price:78188,fair:85000,bear:62000,bull:110000,day:0.56,cycle:"N/A",earnings:"N/A",investors:"ETF / ",filings:"Public disclosures"}
@@ -432,7 +432,7 @@ function restoreState(){
     state.sources=Array.isArray(state.sources)?state.sources:[];
     state.audit=Array.isArray(state.audit)?state.audit:[];
     state.registry=Array.isArray(state.registry)?state.registry:[];
-    trading.universe=Array.isArray(trading.universe)?trading.universe.map(x=>Object.assign({dossier:{}},x||{})).filter(x=>x.ticker):[];
+    state.universe=Array.isArray(state.universe)?state.universe.map(x=>Object.assign({dossier:{}},x||{})).filter(x=>x.ticker):[];
     state.research=Object.assign({endpoint:"/api/research",status:"idle",lastRun:null,lastError:null,queue:[]},state.research||{});
     return true;
   }catch(e){
@@ -496,12 +496,12 @@ function extractRecords(text){
 }
 function mergeSecurity(s){
   if(!s||!s.ticker)return null;
-  const idx=trading.universe.findIndex(x=>x.ticker===s.ticker);
+  const idx=state.universe.findIndex(x=>x.ticker===s.ticker);
   if(idx<0){
-    trading.universe.push(s);
-    return trading.universe[trading.universe.length-1];
+    state.universe.push(s);
+    return state.universe[state.universe.length-1];
   }
-  const cur=trading.universe[idx];
+  const cur=state.universe[idx];
   Object.keys(s).forEach(k=>{
     if(k==="dossier")cur.dossier=Object.assign({},cur.dossier||{},s.dossier||{});
     else if(s[k]!==undefined && s[k]!=="" && s[k]!==null)cur[k]=s[k];
@@ -625,13 +625,13 @@ async function loadCrypto(){
     if(!r.ok)throw new Error("CoinGecko HTTP "+r.status);
     const data=await r.json();
     state.crypto=data;renderMarket(data);log("markets","CoinGecko live crypto snapshot loaded.");
-  }catch(e){renderMarket(trading.universe.filter(x=>x.ticker==="BTC").map(x=>({name:x.name,symbol:"BTC",current_price:x.price,price_change_percentage_24h:x.day,market_cap:0})));log("markets","Live crypto request unavailable: "+e.message)}
+  }catch(e){renderMarket(state.universe.filter(x=>x.ticker==="BTC").map(x=>({name:x.name,symbol:"BTC",current_price:x.price,price_change_percentage_24h:x.day,market_cap:0})));log("markets","Live crypto request unavailable: "+e.message)}
 }
 function renderMarket(data){
   $("marketList").innerHTML=`<table><thead><tr><th>Asset</th><th>Price</th><th>24h</th><th>Mkt Cap</th></tr></thead><tbody>`+
   data.map(x=>`<tr class="clickable" onclick="openResearch('${esc((x.symbol||x.ticker||"").toUpperCase())}')"><td><b>${esc(x.name)}</b> ${esc((x.symbol||"").toUpperCase())}</td><td>${money(x.current_price||x.price||0)}</td><td class="${(x.price_change_percentage_24h||x.day||0)>=0?'good':'bad'}">${pct(x.price_change_percentage_24h||x.day||0)}</td><td>${x.market_cap?money(x.market_cap):"—"}</td></tr>`).join("")+"</tbody></table>";
 }
-function marketTab(type,btn){document.querySelectorAll("#win-markets .tabbar button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");if(type==="crypto")loadCrypto();else{const arr=trading.universe.filter(x=>type==="equities"?x.ticker!=="BTC":x.ticker==="BTC");renderMarket(arr.map(x=>({name:x.name,symbol:x.ticker,current_price:x.price,price_change_percentage_24h:x.day,market_cap:0})));log("markets",type+" market view selected; live equity/commodity feeds require configured source.");}}
+function marketTab(type,btn){document.querySelectorAll("#win-markets .tabbar button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");if(type==="crypto")loadCrypto();else{const arr=state.universe.filter(x=>type==="equities"?x.ticker!=="BTC":x.ticker==="BTC");renderMarket(arr.map(x=>({name:x.name,symbol:x.ticker,current_price:x.price,price_change_percentage_24h:x.day,market_cap:0})));log("markets",type+" market view selected; live equity/commodity feeds require configured source.");}}
 function filterMarket(){const q=$("marketSearch").value.toLowerCase();document.querySelectorAll("#marketList tbody tr").forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?"":"none")}
 
 async function runPaperTest(){
@@ -686,7 +686,7 @@ function calcSize(){
   $("sizeResult").innerHTML=`<b>Risk budget:</b> ${money(riskDollars)}<br><b>Per-unit risk:</b> ${money(unitRisk)}<br><b>Exact position size:</b> ${qty.toFixed(6)} units<br><b>Notional:</b> ${money(notional)}<br><span class="small">Formula: risk budget ÷ absolute entry-to-stop distance.</span>`;
   log("risk_engine",`Calculated ${qty.toFixed(6)} units for ${$("positionLabel").value}.`);
 }
-function sendApproval(){$("approvalMsg").textContent="Position packet sent to supervising My gate.";$("approvalMsg").className="notice mint";log("approval","Risk-sized packet submitted for approval.")}
+function sendApproval(){$("approvalMsg").textContent="Position packet sent to supervising quant gate.";$("approvalMsg").className="notice mint";log("approval","Risk-sized packet submitted for approval.")}
 function approvePacket(){$("approvalMsg").textContent="APPROVED — packet marked spawnable in local paper registry.";$("approvalMsg").className="notice mint";$("approvalCount").textContent=Number($("approvalCount").textContent)+1;log("approval","Packet approved locally.")}
 function rejectPacket(){$("approvalMsg").textContent="REJECTED — packet returned for evidence or risk review.";$("approvalMsg").className="notice danger";log("approval","Packet rejected by local gate.")}
 
@@ -755,12 +755,12 @@ const dz=$("dropzone");["dragenter","dragover"].forEach(ev=>dz.addEventListener(
 
 function buildCompiledLists(){
   const upper=state.files.map(x=>x.text||x.preview||"").join("\n").toUpperCase();
-  const hits=trading.universe.filter(x=>upper.includes(x.ticker));
-  $("securityCount").textContent=trading.universe.length;
+  const hits=state.universe.filter(x=>upper.includes(x.ticker));
+  $("securityCount").textContent=state.universe.length;
   if(hits.length)log("compiled_lists","Tracked symbols detected: "+hits.map(x=>x.ticker).join(", "));
 }
 function renderUniverse(){
-  $("universeBody").innerHTML=trading.universe.map(x=>`<tr class="clickable" onclick="openResearch('${x.ticker}')">
+  $("universeBody").innerHTML=state.universe.map(x=>`<tr class="clickable" onclick="openResearch('${x.ticker}')">
     <td><b>${x.ticker}</b><br>${esc(x.name)}<br><span class="small">${esc(x.sector)}</span></td>
     <td>${money(x.price)}<br><span class="${x.day>=0?'good':'bad'}">${pct(x.day)}</span></td>
     <td><b>${money(x.fair)}</b><br><span class="${x.fair>=x.price?'good':'bad'}">${pct((x.fair/x.price-1)*100)}</span></td>
@@ -787,7 +787,7 @@ function researchTabsFor(x){
   $("researchTabs").innerHTML=tabs.map((t,i)=>`<button class="${i===0?"active":""}" onclick="researchTab('${t}',this)">${t}</button>`).join("");
 }
 function openResearch(ticker){
-  let x=trading.universe.find(z=>z.ticker===ticker)||trading.universe.find(z=>z.ticker==="BTC");
+  let x=state.universe.find(z=>z.ticker===ticker)||state.universe.find(z=>z.ticker==="BTC");
   if(!x){
     x={ticker:normalizeTicker(ticker)||String(ticker||"UNKNOWN"),name:normalizeTicker(ticker)||String(ticker||"Unknown security"),sector:"Imported security",price:0,fair:0,bear:0,bull:0,day:0,cycle:"Research required",earnings:"Research required",investors:"Research required",filings:"Research required",dossier:{}};
     mergeSecurity(x);
@@ -810,7 +810,7 @@ function researchedBlock(x,key){
 }
 function researchTab(tab,btn){
   document.querySelectorAll("#researchTabs button").forEach(b=>b.classList.remove("active"));btn?.classList.add("active");
-  const x=trading.universe.find(z=>z.ticker===state.selected)||trading.universe[0],c=$("researchContent");
+  const x=state.universe.find(z=>z.ticker===state.selected)||state.universe[0],c=$("researchContent");
   if(tab==="OVERVIEW")c.innerHTML=`<div class="dossier-grid">${metric("Public price",money(x.price),"Observed market price when connected.")}${metric("Model value",money(x.fair),"Internal valuation estimate; assumptions must be sourced.")}${metric("Upside / gap",pct(x.price?((x.fair/x.price-1)*100):0))}${metric("Risk band",money(x.bear)+" — "+money(x.bull))}</div>${box(" summary",`<div class="notice info">This dossier separates observed facts, sourced disclosures and mathematical model outputs. Unknown information is explicitly marked as research required.</div><p class="small">For an actual investment-grade report, connect approved market/news/filing sources and preserve source timestamps and document identifiers.</p>`)}${researchedBlock(x,"overview")}`;
   else if(tab==="LIVE MARKET")c.innerHTML=box("Live Market Data",`<div class="dossier-grid">${metric("Last",money(x.price))}${metric("24h",pct(x.day))}${metric("Bid / Ask","Feed required")}${metric("Volume","Feed required")}</div><div class="chart" style="height:350px"><canvas id="detailChart"></canvas></div>`) + researchedBlock(x,"live_market");
   else if(tab==="VALUATION")c.innerHTML=box("Valuation Stack",`<table><thead><tr><th>Method</th><th>Value</th><th>Formula / assumptions</th><th>Status</th></tr></thead><tbody><tr><td>Public market</td><td>${money(x.price)}</td><td>Observed quote</td><td>Observed</td></tr><tr><td>DCF</td><td>${money(x.price*1.12)}</td><td>PV of FCF + terminal value</td><td>Illustrative</td></tr><tr><td>Relative</td><td>${money(x.price*1.17)}</td><td>Peer multiples</td><td>Illustrative</td></tr><tr><td>Composite</td><td>${money(x.fair)}</td><td>Weighted model output</td><td>Model</td></tr></tbody></table>`) + researchedBlock(x,"valuation");
@@ -839,7 +839,7 @@ $("worldFrame").addEventListener("error",()=>{$("worldFallback").classList.add("
 
 const restored=restoreState();
 renderUniverse();renderFiles();renderDirectSources();renderRegistry();initAnalytics();buildWindowTasks();buildCompiledLists();loadCrypto();
-log("orchestrator",restored?"Persisted CaliQDesk state restored.":"Screenshot-style MisoPretty My Desk initialized.");
+log("orchestrator",restored?"Persisted CaliQDesk state restored.":"Screenshot-style MisoPretty Quant Desk initialized.");
 log("ingestion","Browser file ingestion is enabled for text-based files; pasted content is accepted.");
 log("sources","DIRECT SOURCES / FILING window online.");
 log("research","Click any security in the compiled universe to open the  dossier.");
