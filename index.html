@@ -159,7 +159,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
 <body>
 <div class="desktop">
   <header class="desk-top">
-    <div class="brand"><span class="brand-icon"></span><span>MisoPretty's Quant Desk</span><span class="pill">CALIQDESK // INSTITUTIONAL</span></div>
+    <div class="brand"><span class="brand-icon"></span><span>MisoPretty's Quant Desk</span><span class="pill">CALIQDESK // </span></div>
     <div class="top-actions">
       <span class="pill"><span class="status"></span><span id="dataState">PAPER / LOCAL</span></span>
       <span id="sysClock"></span>
@@ -174,7 +174,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
       <div class="window-header"><div class="window-title"><span class="window-app"></span>MISSION CONTROL</div><div class="window-controls"><button onclick="minWin('win-mission')">−</button><button onclick="maxWin('win-mission')">□</button><button onclick="closeWin('win-mission')">×</button></div></div>
       <div class="window-body">
         <h2 style="font-size:22px;margin:0">Desk Operating System</h2>
-        <p class="small">Institutional research, canonical data, market intelligence, filing evidence, risk, paper execution and audit lineage.</p>
+        <p class="small"> research, canonical data, market intelligence, filing evidence, risk, paper execution and audit lineage.</p>
         <div class="grid2">
           <button class="btn-pink" onclick="refreshAll()">Refresh live sources</button>
           <button class="btn-yellow" onclick="resetLayout()">Reset window layout</button>
@@ -313,7 +313,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
     </section>
 
     <section id="win-analytics" class="window" style="left:0;top:1065px;width:760px;height:420px">
-      <div class="window-header"><div class="window-title"><span class="window-app"></span>INSTITUTIONAL ANALYTICS / P&L / ALLOCATION / DRAWDOWN</div><div class="window-controls"><button onclick="minWin('win-analytics')">−</button><button onclick="maxWin('win-analytics')">□</button><button onclick="closeWin('win-analytics')">×</button></div></div>
+      <div class="window-header"><div class="window-title"><span class="window-app"></span> ANALYTICS / P&L / ALLOCATION / DRAWDOWN</div><div class="window-controls"><button onclick="minWin('win-analytics')">−</button><button onclick="maxWin('win-analytics')">□</button><button onclick="closeWin('win-analytics')">×</button></div></div>
       <div class="window-body">
         <div class="grid4">
           <div class="kpi"><div class="k-label tooltip" data-tip="Total portfolio value after modeled P&L.">Portfolio Value</div><div class="k-value" id="aValue">$10,685</div></div>
@@ -343,7 +343,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
     </section>
 
     <section id="win-universe" class="window" style="left:0;top:1505px;width:1840px;height:420px">
-      <div class="window-header"><div class="window-title"><span class="window-app"></span>COMPILED SECURITY UNIVERSE / CLICK FOR INSTITUTIONAL DOSSIER</div><div class="window-controls"><button onclick="minWin('win-universe')">−</button><button onclick="maxWin('win-universe')">□</button><button onclick="closeWin('win-universe')">×</button></div></div>
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>COMPILED SECURITY UNIVERSE / CLICK FOR  DOSSIER</div><div class="window-controls"><button onclick="minWin('win-universe')">−</button><button onclick="maxWin('win-universe')">□</button><button onclick="closeWin('win-universe')">×</button></div></div>
       <div class="window-body">
         <div class="grid4">
           <div class="kpi"><div class="k-label">Tracked securities</div><div class="k-value" id="securityCount">4</div></div>
@@ -377,7 +377,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
 
 <div id="researchModal" class="research-modal">
   <div class="research-panel">
-    <div class="research-head"><div><b id="modalTitle">Institutional Dossier</b><div id="modalSub" class="small">Evidence-aware research</div></div><button onclick="closeResearch()">× CLOSE</button></div>
+    <div class="research-head"><div><b id="modalTitle"> Dossier</b><div id="modalSub" class="small">Evidence-aware research</div></div><button onclick="closeResearch()">× CLOSE</button></div>
     <div class="research-content">
       <div id="researchTabs" class="tabbar"></div>
       <div id="researchContent"></div>
@@ -401,7 +401,7 @@ const state={
     {ticker:"QNT",name:"Quantinuum",sector:"Quantum Computing",price:49.95,fair:58.40,bear:45,bull:96,day:0.84,cycle:"Private / IPO monitor",earnings:"Model queue",investors:"Funding records queue",filings:"SEC / IPO watch"},
     {ticker:"ENPH",name:"Enphase Energy",sector:"Solar / Energy",price:37.26,fair:38.10,bear:28,bull:65,day:-0.42,cycle:"Public",earnings:"Estimate queue",investors:"13F / holders",filings:"10-K / 10-Q / 8-K"},
     {ticker:"GOOGL",name:"Alphabet",sector:"Internet / AI",price:346.74,fair:348.50,bear:290,bull:410,day:0.67,cycle:"Public",earnings:"Estimate queue",investors:"13F / holders",filings:"10-K / 10-Q / 8-K"},
-    {ticker:"BTC",name:"Bitcoin",sector:"Digital Asset",price:78188,fair:85000,bear:62000,bull:110000,day:0.56,cycle:"N/A",earnings:"N/A",investors:"ETF / institutional",filings:"Public disclosures"}
+    {ticker:"BTC",name:"Bitcoin",sector:"Digital Asset",price:78188,fair:85000,bear:62000,bull:110000,day:0.56,cycle:"N/A",earnings:"N/A",investors:"ETF / ",filings:"Public disclosures"}
   ]
 };
 let charts={analytics:null,valuation:null,lockup:null,paper:null,detail:null};
@@ -607,7 +607,7 @@ function researchTabsFor(x){
 function openResearch(ticker){
   let x=state.universe.find(z=>z.ticker===ticker)||state.universe.find(z=>z.ticker==="BTC");
   if(!x)x={ticker,name:ticker,sector:"Imported security",price:0,fair:0,bear:0,bull:0,day:0,cycle:"Research required",earnings:"Research required",investors:"Research required",filings:"Research required"};
-  state.selected=x.ticker;$("modalTitle").textContent=`${x.ticker} — ${x.name}`;$("modalSub").textContent=`${x.sector} · institutional research dossier`;
+  state.selected=x.ticker;$("modalTitle").textContent=`${x.ticker} — ${x.name}`;$("modalSub").textContent=`${x.sector} ·  research dossier`;
   researchTabsFor(x);$("researchModal").classList.add("open");researchTab("OVERVIEW",$("researchTabs").firstElementChild);log("research","Opened dossier for "+x.ticker)
 }
 function closeResearch(){if(charts.detail){charts.detail.destroy();charts.detail=null}$("researchModal").classList.remove("open")}
@@ -616,7 +616,7 @@ function metric(label,value,tip){return `<div class="kpi"><div class="k-label ${
 function researchTab(tab,btn){
   document.querySelectorAll("#researchTabs button").forEach(b=>b.classList.remove("active"));btn?.classList.add("active");
   const x=state.universe.find(z=>z.ticker===state.selected)||state.universe[0],c=$("researchContent");
-  if(tab==="OVERVIEW")c.innerHTML=`<div class="dossier-grid">${metric("Public price",money(x.price),"Observed market price when connected.")}${metric("Model value",money(x.fair),"Internal valuation estimate; assumptions must be sourced.")}${metric("Upside / gap",pct((x.fair/x.price-1)*100))}${metric("Risk band",money(x.bear)+" — "+money(x.bull))}</div>${box("Institutional summary",`<div class="notice info">This dossier separates observed facts, sourced disclosures and mathematical model outputs. Unknown information is explicitly marked as research required.</div><p class="small">For an actual investment-grade report, connect approved market/news/filing sources and preserve source timestamps and document identifiers.</p>`)}`;
+  if(tab==="OVERVIEW")c.innerHTML=`<div class="dossier-grid">${metric("Public price",money(x.price),"Observed market price when connected.")}${metric("Model value",money(x.fair),"Internal valuation estimate; assumptions must be sourced.")}${metric("Upside / gap",pct((x.fair/x.price-1)*100))}${metric("Risk band",money(x.bear)+" — "+money(x.bull))}</div>${box(" summary",`<div class="notice info">This dossier separates observed facts, sourced disclosures and mathematical model outputs. Unknown information is explicitly marked as research required.</div><p class="small">For an actual investment-grade report, connect approved market/news/filing sources and preserve source timestamps and document identifiers.</p>`)}`;
   else if(tab==="LIVE MARKET")c.innerHTML=box("Live Market Data",`<div class="dossier-grid">${metric("Last",money(x.price))}${metric("24h",pct(x.day))}${metric("Bid / Ask","Feed required")}${metric("Volume","Feed required")}</div><div class="chart" style="height:350px"><canvas id="detailChart"></canvas></div>`);
   else if(tab==="VALUATION")c.innerHTML=box("Valuation Stack",`<table><thead><tr><th>Method</th><th>Value</th><th>Formula / assumptions</th><th>Status</th></tr></thead><tbody><tr><td>Public market</td><td>${money(x.price)}</td><td>Observed quote</td><td>Observed</td></tr><tr><td>DCF</td><td>${money(x.price*1.12)}</td><td>PV of FCF + terminal value</td><td>Illustrative</td></tr><tr><td>Relative</td><td>${money(x.price*1.17)}</td><td>Peer multiples</td><td>Illustrative</td></tr><tr><td>Composite</td><td>${money(x.fair)}</td><td>Weighted model output</td><td>Model</td></tr></tbody></table>`);
   else if(tab==="EARNINGS")c.innerHTML=box("Projected Earnings",`<div class="dossier-grid">${metric("Revenue","Connect financial feed")}${metric("EPS","Connect estimates")}${metric("FCF","Connect filings")}${metric("Next report","Calendar feed")}</div><div class="notice">Projected earnings must be driven by sourced historical financials, explicit assumptions, scenario probabilities and a versioned forecast model. The dashboard does not silently fabricate company estimates.</div>`);
@@ -624,7 +624,7 @@ function researchTab(tab,btn){
   else if(tab==="NEWS / INDUSTRY")c.innerHTML=box("Latest News / Industry Impact",`<div class="notice info">Live headlines require a connected news provider. This panel is intentionally evidence-first: each headline should retain publisher, timestamp, URL and relevance classification.</div><ul><li>Company-specific news</li><li>Industry demand / pricing</li><li>Competitor developments</li><li>Supply-chain and macro events</li><li>Geopolitical / infrastructure exposure</li></ul>`);
   else if(tab==="GOVERNMENT")c.innerHTML=box("Government / Legislation",`<div class="dossier-grid">${metric("SEC","Filings / enforcement")}${metric("Congress","Bills / committees")}${metric("Agencies","Rules / actions")}${metric("Contracts","Procurement records")}</div><div class="notice">Government exposure should be tied to official records: bill text, committee action, final rules, agency notices, procurement records and enforcement releases.</div>`);
   else if(tab==="LOBBYING / POLITICAL")c.innerHTML=box("Lobbying / Political Disclosures",`<div class="notice danger"><b>Evidence standard:</b> a campaign donation, lobbying registration or political association does not by itself establish intent or causality.</div><ul><li>Registered lobbyists / clients</li><li>Lobbying issues and filings</li><li>FEC receipts / disbursements where applicable</li><li>Corporate PAC disclosures</li><li>Known executives / donors based on public records</li></ul>`);
-  else if(tab==="INVESTORS")c.innerHTML=box("Known Investors / Funds / Institutions",`<table><thead><tr><th>Phase</th><th>Investor / fund</th><th>Association</th><th>Evidence</th></tr></thead><tbody><tr><td>Seed</td><td>Research queue</td><td>Funding participant</td><td>Company announcement / Form D</td></tr><tr><td>Growth</td><td>Research queue</td><td>Institution / fund</td><td>Funding announcement</td></tr><tr><td>Public</td><td>Research queue</td><td>Institutional holder</td><td>13F / beneficial ownership</td></tr></tbody></table>`);
+  else if(tab==="INVESTORS")c.innerHTML=box("Known Investors / Funds / Institutions",`<table><thead><tr><th>Phase</th><th>Investor / fund</th><th>Association</th><th>Evidence</th></tr></thead><tbody><tr><td>Seed</td><td>Research queue</td><td>Funding participant</td><td>Company announcement / Form D</td></tr><tr><td>Growth</td><td>Research queue</td><td>Institution / fund</td><td>Funding announcement</td></tr><tr><td>Public</td><td>Research queue</td><td> holder</td><td>13F / beneficial ownership</td></tr></tbody></table>`);
   else if(tab==="FILINGS / TAX")c.innerHTML=box("SEC / Government Forms",`<div class="dossier-grid">${metric("10-K","Annual")}${metric("10-Q","Quarterly")}${metric("8-K","Material events")}${metric("Form 4","Insiders")}${metric("13D / 13G","Ownership")}${metric("13F","Institutions")}${metric("S-1","IPO / registration")}${metric("DEF 14A","Proxy")}</div>`)+box("IRS / Tax reality",`Corporate federal income-tax returns (IRS Form 1120 and related returns) are generally not public records. Publicly analyzable tax evidence usually comes from SEC tax footnotes, effective tax rate, cash taxes, deferred tax assets/liabilities, NOLs, credits and disclosed disputes.`);
   else if(tab==="DIRECT SOURCES / FILING")c.innerHTML=box("Direct Sources Attached",state.sources.length?state.sources.map(s=>`<div class="source-item"><b>${esc(s.name)}</b><br><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a></div>`).join(""):`<div class="notice">No direct sources attached yet. Add them in the DIRECT SOURCES / FILING desktop window.</div>`);
   else if(tab==="MATH / FORECAST")c.innerHTML=box("Mathematical Forecast Engine",`<p><b>DCF:</b> V = Σ FCFₜ/(1+WACC)ᵗ + TV/(1+WACC)ⁿ.</p><p><b>Scenario EV:</b> P(bear)·R(bear) + P(base)·R(base) + P(bull)·R(bull).</p><p><b>Position sizing:</b> Risk budget ÷ |entry − stop|.</p><p><b>Brier score:</b> mean((probability − outcome)²); lower is better.</p><div class="notice info">The math is deterministic once assumptions are supplied. The uncertainty is in the inputs, probabilities and model specification.</div>`);
@@ -646,7 +646,7 @@ renderUniverse();renderFiles();renderDirectSources();renderRegistry();initAnalyt
 log("orchestrator","Screenshot-style MisoPretty Quant Desk initialized.");
 log("ingestion","Browser file ingestion is enabled for text-based files; pasted content is accepted.");
 log("sources","DIRECT SOURCES / FILING window online.");
-log("research","Click any security in the compiled universe to open the institutional dossier.");
+log("research","Click any security in the compiled universe to open the  dossier.");
 log("world_monitor","World Monitor embed mounted at bottom of long scrollable workspace.");
 </script>
 </body>
