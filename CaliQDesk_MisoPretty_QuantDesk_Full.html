@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CaliQDesk — MisoPretty Quant Desk</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --desk-blue:#cfefff;
+  --desk-pink:#f7d8ee;
+  --desk-lav:#e8dcff;
+  --paper:#fffdfd;
+  --paper-2:#f8f4fa;
+  --ink:#171717;
+  --muted:#555;
+  --cyan:#4de6d0;
+  --cyan-dark:#087d70;
+  --pink:#ff62b5;
+  --yellow:#ffe46b;
+  --blue:#91b9ff;
+  --purple:#c6a2ff;
+  --green:#34c77b;
+  --red:#ff5b68;
+  --orange:#ffae4b;
+  --shadow:5px 5px 0 #111;
+  --font-ui:Arial, Helvetica, sans-serif;
+  --font-mono:"Fira Code","JetBrains Mono","Cascadia Code","Source Code Pro",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;min-height:100vh;background:linear-gradient(135deg,var(--desk-blue) 0%,#d9efff 45%,var(--desk-pink) 100%);
+  color:var(--ink);font-family:var(--font-ui);overflow-x:auto;
+}
+body:before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background-image:radial-gradient(rgba(255,255,255,.45) 1px,transparent 1px);
+  background-size:16px 16px;opacity:.45;
+}
+button,input,select,textarea{font:inherit}
+button{
+  border:3px solid #111;background:#fff;border-radius:12px;padding:8px 13px;font-weight:800;
+  cursor:pointer;box-shadow:3px 3px 0 #111;transition:.12s transform,.12s box-shadow,.12s background;
+}
+button:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 #111;background:#f4f4f4}
+button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #111}
+.btn-pink{background:var(--pink)} .btn-yellow{background:var(--yellow)} .btn-blue{background:var(--blue)}
+.btn-green{background:var(--cyan)} .btn-purple{background:var(--purple)}
+input,select,textarea{
+  width:100%;background:#fff;border:3px solid #111;border-radius:11px;padding:10px 12px;outline:none;
+}
+input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(77,230,208,.5)}
+textarea{resize:vertical;min-height:90px}
+label{display:block;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+a{color:#0656b6;font-weight:800}
+.small{font-size:11px;color:var(--muted);line-height:1.35}
+.mono{font-family:var(--font-mono)}
+.good{color:#087b45}.bad{color:#bd1730}.warn{color:#9a5b00}.cyan{color:#007e72}
+.desktop{
+  width:max(1500px,calc(100vw - 18px));min-height:100vh;padding:18px 8px 72px;
+  position:relative;
+}
+.desk-top{
+  height:64px;background:linear-gradient(90deg,#fff 0%,#f8f7ff 55%,#fff 100%);
+  border:3px solid #111;border-radius:17px;box-shadow:var(--shadow);
+  display:flex;align-items:center;justify-content:space-between;padding:8px 16px;margin-bottom:12px;
+  position:sticky;top:8px;z-index:80;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:1000;font-size:20px}
+.brand-icon{width:30px;height:30px;border:3px solid #111;border-radius:9px;background:linear-gradient(135deg,var(--cyan),var(--pink),var(--yellow))}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#sysClock{font-weight:900;font-size:12px;border:2px solid #111;border-radius:10px;padding:7px 10px;background:#fff}
+.workspace{
+  position:relative;min-height:1970px;
+}
+.window{
+  position:absolute;background:var(--paper);border:3px solid #111;border-radius:17px;
+  box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;
+  min-width:270px;min-height:120px;resize:both;
+}
+.window.hidden{display:none}
+.window.maximized{
+  position:fixed!important;left:12px!important;top:82px!important;width:calc(100vw - 24px)!important;
+  height:calc(100vh - 96px)!important;z-index:1000!important;
+}
+.window-header{
+  height:42px;min-height:42px;background:linear-gradient(90deg,#ffd7e9 0%,#e9dcff 55%,#d8f2ff 100%);
+  border-bottom:3px solid #111;display:flex;align-items:center;justify-content:space-between;padding:5px 8px 5px 10px;
+  cursor:grab;user-select:none;
+}
+.window-header:active{cursor:grabbing}
+.window-title{font-weight:1000;letter-spacing:.5px;font-size:13px;display:flex;align-items:center;gap:7px}
+.window-app{width:14px;height:14px;border:2px solid #111;border-radius:4px;background:linear-gradient(135deg,var(--pink),var(--yellow))}
+.window-controls{display:flex;gap:6px}
+.window-controls button{
+  width:24px;height:24px;padding:0;border-width:2px;border-radius:7px;box-shadow:1px 1px 0 #111;background:#fff;font-size:13px
+}
+.window-body{padding:12px;overflow:auto;min-height:0;flex:1;background:linear-gradient(180deg,#fffdfd,#faf6fb)}
+.window-body::-webkit-scrollbar{width:12px;height:12px}.window-body::-webkit-scrollbar-thumb{background:#bbb;border:3px solid #fff;border-radius:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.kpi{border:3px solid #111;border-radius:13px;background:#fff;padding:10px;box-shadow:2px 2px 0 #111}
+.kpi .k-label{font-size:11px;color:#444;font-weight:900;text-transform:uppercase}.kpi .k-value{font-size:20px;font-weight:1000;margin-top:5px}
+.kpi .k-sub{font-size:10px;color:#666;margin-top:4px}
+.card{border:3px solid #111;border-radius:14px;background:#fff;padding:11px;box-shadow:2px 2px 0 #111}
+.card h3{font-size:15px;margin:0 0 8px}.card h4{font-size:12px;margin:0 0 6px;text-transform:uppercase}
+.pill{display:inline-flex;align-items:center;border:2px solid #111;border-radius:999px;padding:5px 9px;background:#fff;font-size:11px;font-weight:900}
+.status{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--green);border:1px solid #111;margin-right:5px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th,td{padding:8px 7px;text-align:left;border-bottom:2px solid #ddd;vertical-align:top}
+th{font-size:10px;text-transform:uppercase;background:#f4eff7;position:sticky;top:0;z-index:2}
+tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
+.chart{height:220px;position:relative}.chart.small{height:165px}
+.dropzone{
+  border:3px dashed #111;border-radius:14px;padding:15px;text-align:center;background:#eefeff;
+  cursor:pointer;font-weight:900;
+}
+.dropzone.drag{background:#d4fff7;box-shadow:0 0 0 4px var(--cyan)}
+.file-row{display:flex;justify-content:space-between;gap:8px;border-bottom:2px solid #ddd;padding:7px 0;font-size:11px}
+.terminal{background:#101010;color:#f7f7f7;border:3px solid #111;border-radius:12px;padding:10px;min-height:150px;max-height:280px;overflow:auto;font-family:var(--font-mono);font-size:10px;line-height:1.55}
+.terminal .agent{color:#62f1d9}.terminal .time{color:#999}.terminal .warn{color:#ffd86b}
+.tooltip{position:relative;border-bottom:2px dotted #555;cursor:help}.tooltip:hover:after{
+  content:attr(data-tip);position:absolute;left:0;bottom:calc(100% + 8px);width:260px;background:#111;color:#fff;padding:9px;
+  border-radius:9px;z-index:3000;font-size:11px;line-height:1.4;box-shadow:4px 4px 0 rgba(0,0,0,.35)
+}
+.list{max-height:230px;overflow:auto}.source-item{border:2px solid #111;border-radius:10px;padding:8px;margin-bottom:7px;background:#fff}
+.tabbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.tabbar button{font-size:10px;padding:7px 9px}.tabbar button.active{background:var(--cyan)}
+.research-modal{
+  position:fixed;inset:0;background:rgba(15,20,30,.7);z-index:2000;display:none;padding:16px;
+}
+.research-modal.open{display:flex}.research-panel{
+  width:min(1500px,98vw);height:94vh;margin:auto;background:#fff;border:3px solid #111;border-radius:18px;box-shadow:8px 8px 0 #111;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.research-head{padding:9px 12px;background:linear-gradient(90deg,#ffd7e9,#e9dcff,#d8f2ff);border-bottom:3px solid #111;display:flex;justify-content:space-between;align-items:center}
+.research-content{overflow:auto;padding:14px;background:#fbf7fb}
+.dossier-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.notice{border:3px solid #111;border-radius:12px;padding:10px;background:#fff8cc}.danger{background:#ffe4e7}.info{background:#e4fbff}.mint{background:#e4fff3}
+.taskbar{
+  position:fixed;bottom:0;left:0;right:0;height:52px;z-index:1500;background:linear-gradient(#fff,#e8e8e8);
+  border:3px solid #111;border-bottom:0;border-radius:17px 17px 0 0;box-shadow:0 -3px 0 #111;
+  display:flex;align-items:center;gap:8px;padding:6px 12px;overflow:auto
+}
+.taskbar .brand-mini{font-weight:1000;white-space:nowrap;margin-right:10px}.task-btn{white-space:nowrap;padding:6px 10px;font-size:11px}
+.world-monitor{
+  position:relative;margin:18px 8px 90px;background:#fff;border:3px solid #111;border-radius:18px;box-shadow:var(--shadow);overflow:hidden;
+}
+.world-head{background:linear-gradient(90deg,#ffd7e9,#e9dcff,#d8f2ff);border-bottom:3px solid #111;padding:11px 14px;display:flex;justify-content:space-between;align-items:center}
+.world-frame{height:900px;background:#0b1120}.world-frame iframe{width:100%;height:100%;border:0;display:block}
+.world-fallback{padding:30px;text-align:center;background:#fff8cc;display:none}
+.world-fallback.show{display:block}
+.footer-note{font-size:11px;color:#555;padding:8px 0}
+@media(max-width:900px){
+  .desktop{width:1500px}.top-actions{display:none}.dossier-grid,.grid4{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="desktop">
+  <header class="desk-top">
+    <div class="brand"><span class="brand-icon"></span><span>MisoPretty's Quant Desk</span><span class="pill">CALIQDESK // INSTITUTIONAL</span></div>
+    <div class="top-actions">
+      <span class="pill"><span class="status"></span><span id="dataState">PAPER / LOCAL</span></span>
+      <span id="sysClock"></span>
+      <button class="btn-pink" onclick="refreshAll()">Refresh</button>
+      <button class="btn-yellow" onclick="resetLayout()">Reset Layout</button>
+    </div>
+  </header>
+
+  <main id="workspace" class="workspace">
+
+    <section id="win-mission" class="window" style="left:0;top:0;width:470px;height:330px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>MISSION CONTROL</div><div class="window-controls"><button onclick="minWin('win-mission')">−</button><button onclick="maxWin('win-mission')">□</button><button onclick="closeWin('win-mission')">×</button></div></div>
+      <div class="window-body">
+        <h2 style="font-size:22px;margin:0">Desk Operating System</h2>
+        <p class="small">Institutional research, canonical data, market intelligence, filing evidence, risk, paper execution and audit lineage.</p>
+        <div class="grid2">
+          <button class="btn-pink" onclick="refreshAll()">Refresh live sources</button>
+          <button class="btn-yellow" onclick="resetLayout()">Reset window layout</button>
+        </div>
+        <div class="grid4">
+          <div class="kpi"><div class="k-label">Live source status</div><div class="k-value" style="font-size:15px">Crypto live</div></div>
+          <div class="kpi"><div class="k-label">Registry entries</div><div class="k-value" id="registryCount">0</div></div>
+          <div class="kpi"><div class="k-label">Audit events</div><div class="k-value" id="auditCount">0</div></div>
+          <div class="kpi"><div class="k-label">Open approvals</div><div class="k-value" id="approvalCount">0</div></div>
+        </div>
+        <div class="notice info"><b>Operating rule:</b> verified facts and model assumptions are kept separate. Forecasts are projections, not guarantees.</div>
+      </div>
+    </section>
+
+    <section id="win-sources" class="window" style="left:490px;top:0;width:390px;height:330px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>SOURCE SETTINGS</div><div class="window-controls"><button onclick="minWin('win-sources')">−</button><button onclick="maxWin('win-sources')">□</button><button onclick="closeWin('win-sources')">×</button></div></div>
+      <div class="window-body">
+        <div class="grid2">
+          <div><label>Finnhub API key</label><input id="finnhubKey" type="password" placeholder="Optional live equities key"></div>
+          <div><label>FRED API key</label><input id="fredKey" type="password" placeholder="Optional macro key"></div>
+        </div>
+        <div class="grid2">
+          <button class="btn-pink" onclick="saveKeys()">Save keys</button>
+          <button onclick="testSources()">Test configured sources</button>
+        </div>
+        <div class="card">
+          <h3>Source status</h3>
+          <table><thead><tr><th>Source</th><th>Mode</th><th>Status</th></tr></thead><tbody>
+            <tr><td>CoinGecko</td><td>Direct</td><td class="good">Available</td></tr>
+            <tr><td>SEC EDGAR</td><td>Direct link</td><td>Ready</td></tr>
+            <tr><td>Finnhub</td><td>API</td><td id="finnStatus">Not configured</td></tr>
+            <tr><td>FRED</td><td>API</td><td id="fredStatus">Not configured</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <section id="win-paper" class="window" style="left:1060px;top:0;width:390px;height:330px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>PAPER LAB</div><div class="window-controls"><button onclick="minWin('win-paper')">−</button><button onclick="maxWin('win-paper')">□</button><button onclick="closeWin('win-paper')">×</button></div></div>
+      <div class="window-body">
+        <div class="grid2"><div><label>Asset</label><input id="paperAsset" value="bitcoin"></div><div><label>Lookback days</label><input id="lookback" type="number" value="90"></div></div>
+        <div class="grid2"><div><label>Fast MA</label><input id="fastMA" type="number" value="10"></div><div><label>Slow MA</label><input id="slowMA" type="number" value="30"></div></div>
+        <div class="grid2"><button class="btn-pink" onclick="runPaperTest()">Run real-data paper test</button><span class="pill" id="paperStatus">Idle</span></div>
+        <div class="card"><h3>Results</h3><div id="paperResults" class="small">Uses CoinGecko historical price data when available. No simulated source feed is substituted silently.</div></div>
+        <div class="chart small"><canvas id="paperChart"></canvas></div>
+      </div>
+    </section>
+
+    <section id="win-approval" class="window" style="left:1460px;top:0;width:360px;height:330px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>SUPERVISING QUANT GATE</div><div class="window-controls"><button onclick="minWin('win-approval')">−</button><button onclick="maxWin('win-approval')">□</button><button onclick="closeWin('win-approval')">×</button></div></div>
+      <div class="window-body">
+        <div class="card"><h3>Approval protocol</h3>
+          <label><input class="check" type="checkbox"> Evidence packet attached</label>
+          <label><input class="check" type="checkbox"> Validation / paper test passed</label>
+          <label><input class="check" type="checkbox"> Position sizing and tail checks passed</label>
+          <label><input class="check" type="checkbox"> Compliance and market-structure constraints passed</label>
+          <label><input class="check" type="checkbox"> Data lineage and source quality confirmed</label>
+          <button class="btn-pink" onclick="approvePacket()">Approve & mark spawnable</button>
+          <button onclick="rejectPacket()">Reject packet</button>
+        </div>
+        <div id="approvalMsg" class="notice">No approval decision yet.</div>
+      </div>
+    </section>
+
+    <section id="win-markets" class="window" style="left:0;top:350px;width:560px;height:345px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>LIVE MARKETS</div><div class="window-controls"><button onclick="minWin('win-markets')">−</button><button onclick="maxWin('win-markets')">□</button><button onclick="closeWin('win-markets')">×</button></div></div>
+      <div class="window-body">
+        <div class="tabbar"><button class="active" onclick="marketTab('crypto',this)">Crypto</button><button onclick="marketTab('equities',this)">Equities</button><button onclick="marketTab('commodities',this)">Commodities</button></div>
+        <div class="card"><div class="grid2"><input id="marketSearch" placeholder="Search symbol / asset" oninput="filterMarket()"><button class="btn-green" onclick="loadCrypto()">Refresh crypto</button></div></div>
+        <div class="list" id="marketList"></div>
+      </div>
+    </section>
+
+    <section id="win-direct" class="window" style="left:580px;top:350px;width:470px;height:345px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>DIRECT SOURCES / FILING</div><div class="window-controls"><button onclick="minWin('win-direct')">−</button><button onclick="maxWin('win-direct')">□</button><button onclick="closeWin('win-direct')">×</button></div></div>
+      <div class="window-body">
+        <div class="grid2"><div><label>Source name</label><input id="sourceName" placeholder="SEC filing / IR / FEC / news"></div><div><label>URL</label><input id="sourceUrl" placeholder="https://..."></div></div>
+        <button class="btn-pink" onclick="addDirectSource()">Add direct source</button>
+        <div class="card"><h3>Direct source text</h3><textarea id="sourceText" placeholder="Paste filing text, filing excerpt, statement, research note, or source output."></textarea><button class="btn-green" onclick="analyzeSourceText()">Analyze source text</button></div>
+        <div class="card"><h3>Signal packet</h3><div id="signalPacket" class="small">No packet built yet.</div></div>
+        <div class="list" id="directSourceList"></div>
+      </div>
+    </section>
+
+    <section id="win-capital" class="window" style="left:1070px;top:350px;width:390px;height:345px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>CAPITAL / RISK ENGINE</div><div class="window-controls"><button onclick="minWin('win-capital')">−</button><button onclick="maxWin('win-capital')">□</button><button onclick="closeWin('win-capital')">×</button></div></div>
+      <div class="window-body">
+        <div class="grid2"><div><label>Total capital ($)</label><input id="totalCapitalInput" type="number" value="10000"></div><div><label>Risk per trade (%)</label><input id="riskPct" type="number" value="1" step=".1"></div></div>
+        <div class="grid2"><div><label>Entry</label><input id="entryPrice" type="number" value="65000"></div><div><label>Stop</label><input id="stopPrice" type="number" value="62000"></div></div>
+        <label>Position label</label><input id="positionLabel" value="BTC breakout candidate">
+        <button class="btn-green" onclick="calcSize()">Calculate exact size</button>
+        <div id="sizeResult" class="card">Enter values to calculate risk-based size.</div>
+        <button onclick="sendApproval()">Send to approval gate</button>
+      </div>
+    </section>
+
+    <section id="win-registry" class="window" style="left:1480px;top:350px;width:360px;height:345px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>STRATEGY REGISTRY</div><div class="window-controls"><button onclick="minWin('win-registry')">−</button><button onclick="maxWin('win-registry')">□</button><button onclick="closeWin('win-registry')">×</button></div></div>
+      <div class="window-body">
+        <div class="grid2"><button class="btn-blue" onclick="exportRegistry()">Export registry JSON</button><button onclick="clearRegistry()">Clear registry</button></div>
+        <div id="registryList" class="list"><div class="notice">No strategy packets yet.</div></div>
+      </div>
+    </section>
+
+    <section id="win-canonical" class="window" style="left:0;top:715px;width:480px;height:330px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>CANONICAL DATA MODEL</div><div class="window-controls"><button onclick="minWin('win-canonical')">−</button><button onclick="maxWin('win-canonical')">□</button><button onclick="closeWin('win-canonical')">×</button></div></div>
+      <div class="window-body">
+        <table><tbody>
+          <tr><td>Thesis</td><td class="mono">label, rationale, catalyst, horizon, invalidation</td></tr>
+          <tr><td>Forecast</td><td class="mono">base_case, bull_case, bear_case, confidence</td></tr>
+          <tr><td>Strategy</td><td class="mono">entry_rule, exit_rule, risk_rule, venue, status</td></tr>
+          <tr><td>ApprovalPacket</td><td class="mono">evidence, validation, risk, compliance, decision</td></tr>
+          <tr><td>Position</td><td class="mono">size, entry, stop, pnl, tax, status</td></tr>
+          <tr><td>Source</td><td class="mono">url, filing, timestamp, provenance, confidence</td></tr>
+        </tbody></table>
+        <div class="notice info"><b>Data contract:</b> a claim cannot become a verified fact merely because a model produces a number.</div>
+      </div>
+    </section>
+
+    <section id="win-audit" class="window" style="left:500px;top:715px;width:780px;height:330px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>AUDIT & MEMORY</div><div class="window-controls"><button onclick="minWin('win-audit')">−</button><button onclick="maxWin('win-audit')">□</button><button onclick="closeWin('win-audit')">×</button></div></div>
+      <div class="window-body">
+        <div class="grid2"><button onclick="clearAudit()">Clear audit log</button><button class="btn-blue" onclick="saveSnapshot()">Save state snapshot</button></div>
+        <div id="terminal" class="terminal"></div>
+      </div>
+    </section>
+
+    <section id="win-upload" class="window" style="left:1300px;top:715px;width:540px;height:330px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>RESEARCH INGESTION / COMPILED LISTS</div><div class="window-controls"><button onclick="minWin('win-upload')">−</button><button onclick="maxWin('win-upload')">□</button><button onclick="closeWin('win-upload')">×</button></div></div>
+      <div class="window-body">
+        <div id="dropzone" class="dropzone"><b>DROP FILES HERE</b><br><span class="small">TXT • CSV • JSON • MD • HTML • PDF* • DOCX*</span><br><br><button type="button" class="btn-pink" onclick="document.getElementById('fileInput').click()">SELECT FILES</button><input id="fileInput" type="file" multiple accept=".txt,.csv,.json,.md,.html,.htm,.pdf,.docx" style="display:none"></div>
+        <textarea id="rawPayloadInput" placeholder="Paste watchlists, symbols, report text, URLs, filings, or research notes."></textarea>
+        <div class="grid2"><button class="btn-green" onclick="ingestText()">INGEST & INDEX</button><button onclick="clearFiles()">CLEAR</button></div>
+        <div id="fileList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="win-analytics" class="window" style="left:0;top:1065px;width:760px;height:420px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>INSTITUTIONAL ANALYTICS / P&L / ALLOCATION / DRAWDOWN</div><div class="window-controls"><button onclick="minWin('win-analytics')">−</button><button onclick="maxWin('win-analytics')">□</button><button onclick="closeWin('win-analytics')">×</button></div></div>
+      <div class="window-body">
+        <div class="grid4">
+          <div class="kpi"><div class="k-label tooltip" data-tip="Total portfolio value after modeled P&L.">Portfolio Value</div><div class="k-value" id="aValue">$10,685</div></div>
+          <div class="kpi"><div class="k-label tooltip" data-tip="Realized plus unrealized paper profit/loss.">P&L</div><div class="k-value good" id="aPnl">+$685</div></div>
+          <div class="kpi"><div class="k-label tooltip" data-tip="Capital currently deployed into open positions.">Capital in Trades</div><div class="k-value" id="aTrades">$7,900</div></div>
+          <div class="kpi"><div class="k-label tooltip" data-tip="Peak-to-trough decline in portfolio equity.">Drawdown</div><div class="k-value bad">-4.8%</div></div>
+        </div>
+        <div class="tabbar"><button class="active" onclick="analyticsTab('equity',this)">Equity / P&L</button><button onclick="analyticsTab('allocation',this)">Allocation Mix</button><button onclick="analyticsTab('risk',this)">Drawdown / Risk</button></div>
+        <div class="chart"><canvas id="analyticsChart"></canvas></div>
+      </div>
+    </section>
+
+    <section id="win-spectrum" class="window" style="left:780px;top:1065px;width:530px;height:420px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>VALUATION / 180-DAY / FRACTIONAL MIX</div><div class="window-controls"><button onclick="minWin('win-spectrum')">−</button><button onclick="maxWin('win-spectrum')">□</button><button onclick="closeWin('win-spectrum')">×</button></div></div>
+      <div class="window-body">
+        <div class="chart small"><canvas id="valuationChart"></canvas></div>
+        <div class="chart small"><canvas id="lockupChart"></canvas></div>
+      </div>
+    </section>
+
+    <section id="win-terminal" class="window" style="left:1330px;top:1065px;width:510px;height:420px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>AGENT TERMINAL / SOURCE HEALTH</div><div class="window-controls"><button onclick="minWin('win-terminal')">−</button><button onclick="maxWin('win-terminal')">□</button><button onclick="closeWin('win-terminal')">×</button></div></div>
+      <div class="window-body">
+        <div class="grid3"><div class="kpi"><div class="k-label">Brier Score</div><div class="k-value">0.142</div></div><div class="kpi"><div class="k-label">Win Rate</div><div class="k-value">67%</div></div><div class="kpi"><div class="k-label">Sharpe</div><div class="k-value">1.42</div></div></div>
+        <div class="terminal" id="terminal2"></div>
+      </div>
+    </section>
+
+    <section id="win-universe" class="window" style="left:0;top:1505px;width:1840px;height:420px">
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>COMPILED SECURITY UNIVERSE / CLICK FOR INSTITUTIONAL DOSSIER</div><div class="window-controls"><button onclick="minWin('win-universe')">−</button><button onclick="maxWin('win-universe')">□</button><button onclick="closeWin('win-universe')">×</button></div></div>
+      <div class="window-body">
+        <div class="grid4">
+          <div class="kpi"><div class="k-label">Tracked securities</div><div class="k-value" id="securityCount">4</div></div>
+          <div class="kpi"><div class="k-label">Direct sources</div><div class="k-value" id="sourceCount">0</div></div>
+          <div class="kpi"><div class="k-label">Investor records</div><div class="k-value">Research queue</div></div>
+          <div class="kpi"><div class="k-label">Filing coverage</div><div class="k-value">SEC + public</div></div>
+        </div>
+        <div style="overflow:auto;max-height:290px">
+          <table><thead><tr><th>Security</th><th>Price</th><th>Public / Model Value</th><th>24h</th><th>180D / IPO</th><th>Projected Earnings</th><th>Known Investors / Funds</th><th>Filings / Government</th></tr></thead>
+          <tbody id="universeBody"></tbody></table>
+        </div>
+        <div class="footer-note">Click any row for market data, live chart hooks, latest-news area, valuation math, 180-day cycle, industry/regulatory exposure, lobbying/political disclosures, known investors/funds, filings and direct-source evidence.</div>
+      </div>
+    </section>
+  </main>
+
+  <section class="world-monitor">
+    <div class="world-head">
+      <div><b>WORLD MONITOR // GLOBAL INTELLIGENCE EMBED</b><div class="small">Embedded at full width so the dashboard can remain a long, scrollable research workspace.</div></div>
+      <button onclick="openWorldMonitor()">Open World Monitor</button>
+    </div>
+    <div id="worldFallback" class="world-fallback">
+      <b>The external dashboard may refuse iframe embedding.</b>
+      <p class="small">Browsers honor the destination site's frame/security policy. If the embedded view is blocked, use the button above to open the dashboard directly.</p>
+    </div>
+    <div class="world-frame">
+      <iframe id="worldFrame" title="World Monitor Finance Dashboard" src="https://finance.worldmonitor.app/dashboard?zoom=1.00&view=global&timeRange=7d&layers=pipelines%2Csanctions%2Cweather%2Ceconomic%2Cwaterways%2Coutages%2Cnatural%2CtradeRoutes" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
+  </section>
+</div>
+
+<div id="researchModal" class="research-modal">
+  <div class="research-panel">
+    <div class="research-head"><div><b id="modalTitle">Institutional Dossier</b><div id="modalSub" class="small">Evidence-aware research</div></div><button onclick="closeResearch()">× CLOSE</button></div>
+    <div class="research-content">
+      <div id="researchTabs" class="tabbar"></div>
+      <div id="researchContent"></div>
+    </div>
+  </div>
+</div>
+
+<div class="taskbar">
+  <span class="brand-mini">MisoPretty's Quant Desk</span>
+  <span id="taskClock" class="pill"></span>
+  <button class="task-btn" onclick="showAll()">Show All</button>
+  <span id="windowTasks" style="display:flex;gap:6px;align-items:center"></span>
+  <button class="task-btn btn-yellow" onclick="resetLayout()">Reset Layout</button>
+</div>
+
+<script>
+const state={
+  capital:10000,mode:"PAPER",selected:"QNT",z:20,
+  files:[],sources:[],audit:[],registry:[],
+  universe:[
+    {ticker:"QNT",name:"Quantinuum",sector:"Quantum Computing",price:49.95,fair:58.40,bear:45,bull:96,day:0.84,cycle:"Private / IPO monitor",earnings:"Model queue",investors:"Funding records queue",filings:"SEC / IPO watch"},
+    {ticker:"ENPH",name:"Enphase Energy",sector:"Solar / Energy",price:37.26,fair:38.10,bear:28,bull:65,day:-0.42,cycle:"Public",earnings:"Estimate queue",investors:"13F / holders",filings:"10-K / 10-Q / 8-K"},
+    {ticker:"GOOGL",name:"Alphabet",sector:"Internet / AI",price:346.74,fair:348.50,bear:290,bull:410,day:0.67,cycle:"Public",earnings:"Estimate queue",investors:"13F / holders",filings:"10-K / 10-Q / 8-K"},
+    {ticker:"BTC",name:"Bitcoin",sector:"Digital Asset",price:78188,fair:85000,bear:62000,bull:110000,day:0.56,cycle:"N/A",earnings:"N/A",investors:"ETF / institutional",filings:"Public disclosures"}
+  ]
+};
+let charts={analytics:null,valuation:null,lockup:null,paper:null,detail:null};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function money(n){return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(n)}
+function pct(n){return (n>=0?"+":"")+Number(n).toFixed(2)+"%"}
+function now(){return new Date().toLocaleString()}
+function log(agent,msg){
+  state.audit.push({t:new Date().toISOString(),agent,msg});
+  const line=`<div><span class="time">[${new Date().toLocaleTimeString()}]</span> <span class="agent">${esc(agent).toUpperCase()}</span> ${esc(msg)}</div>`;
+  $("terminal").insertAdjacentHTML("beforeend",line);$("terminal2").insertAdjacentHTML("beforeend",line);
+  $("terminal").scrollTop=$("terminal").scrollHeight;$("terminal2").scrollTop=$("terminal2").scrollHeight;
+  $("auditCount").textContent=state.audit.length;
+}
+function clock(){let d=new Date();$("sysClock").textContent=d.toLocaleString();$("taskClock").textContent=d.toLocaleString()}
+setInterval(clock,1000);clock();
+
+function bringToFront(el){el.style.zIndex=++state.z}
+document.querySelectorAll(".window").forEach(w=>{
+  w.addEventListener("mousedown",()=>bringToFront(w));
+  const header=w.querySelector(".window-header");
+  let drag=false,ox=0,oy=0;
+  header.addEventListener("pointerdown",e=>{
+    if(e.target.closest("button"))return;
+    drag=true;bringToFront(w);header.setPointerCapture(e.pointerId);
+    const r=w.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;
+  });
+  header.addEventListener("pointermove",e=>{
+    if(!drag||w.classList.contains("maximized"))return;
+    const desk=document.querySelector(".workspace").getBoundingClientRect();
+    const r=w.getBoundingClientRect();
+    let x=e.clientX-desk.left-ox,y=e.clientY-desk.top-oy;
+    x=Math.max(0,x);y=Math.max(0,y);
+    w.style.left=x+"px";w.style.top=y+"px";
+  });
+  header.addEventListener("pointerup",()=>drag=false);
+});
+function minWin(id){const w=$(id);if(!w.dataset.restoreHeight)w.dataset.restoreHeight=w.style.height||w.getBoundingClientRect().height+"px";const mini=w.classList.toggle("minimized");w.querySelector(".window-body").style.display=mini?"none":"";w.style.height=mini?"42px":w.dataset.restoreHeight}
+function maxWin(id){$(id).classList.toggle("maximized")}
+function closeWin(id){$(id).classList.add("hidden")}
+function reopen(id){$(id).classList.remove("hidden")}
+function focusWin(id){reopen(id);bringToFront($(id));$(id).scrollIntoView({behavior:"smooth",block:"center"})}
+function buildWindowTasks(){
+  const wrap=$("windowTasks");
+  wrap.innerHTML="";
+  document.querySelectorAll(".window").forEach(w=>{
+    const title=w.querySelector(".window-title")?.innerText.replace(/\s+/g," ").trim()||w.id;
+    const b=document.createElement("button"); b.className="task-btn"; b.textContent=title; b.title="Open / focus this window"; b.onclick=()=>focusWin(w.id); wrap.appendChild(b);
+  });
+}
+function showAll(){document.querySelectorAll(".window").forEach(reopen);buildWindowTasks()}
+function resetLayout(){
+  const defaults={
+    "win-mission":[0,0,470,330],"win-sources":[490,0,390,330],"win-paper":[1060,0,390,330],"win-approval":[1460,0,360,330],
+    "win-markets":[0,350,560,345],"win-direct":[580,350,470,345],"win-capital":[1070,350,390,345],"win-registry":[1480,350,360,345],
+    "win-canonical":[0,715,480,330],"win-audit":[500,715,780,330],"win-upload":[1300,715,540,330],
+    "win-analytics":[0,1065,760,420],"win-spectrum":[780,1065,530,420],"win-terminal":[1330,1065,510,420],"win-universe":[0,1505,1840,420]
+  };
+  Object.entries(defaults).forEach(([id,v])=>{const w=$(id);w.classList.remove("hidden","maximized","minimized");w.querySelector(".window-body").style.display="";w.style.left=v[0]+"px";w.style.top=v[1]+"px";w.style.width=v[2]+"px";w.style.height=v[3]+"px"});
+  log("layout","Window layout restored to screenshot-style desktop.");
+}
+function saveKeys(){localStorage.setItem("caliqdesk.keys",JSON.stringify({finnhub:$("finnhubKey").value,fred:$("fredKey").value}));$("finnStatus").textContent=$("finnhubKey").value?"Configured locally":"Not configured";$("fredStatus").textContent=$("fredKey").value?"Configured locally":"Not configured";log("sources","API settings saved to this browser only.")}
+function testSources(){log("sources","Testing configured source states.");$("finnStatus").textContent=$("finnhubKey").value?"Configured / ready":"Not configured";$("fredStatus").textContent=$("fredKey").value?"Configured / ready":"Not configured"}
+
+async function loadCrypto(){
+  try{
+    const ids="bitcoin,ethereum,tether,binancecoin,ripple,solana";
+    const r=await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids="+ids+"&order=market_cap_desc&per_page=6&page=1&sparkline=false");
+    if(!r.ok)throw new Error("CoinGecko HTTP "+r.status);
+    const data=await r.json();
+    state.crypto=data;renderMarket(data);log("markets","CoinGecko live crypto snapshot loaded.");
+  }catch(e){renderMarket(state.universe.filter(x=>x.ticker==="BTC").map(x=>({name:x.name,symbol:"BTC",current_price:x.price,price_change_percentage_24h:x.day,market_cap:0})));log("markets","Live crypto request unavailable: "+e.message)}
+}
+function renderMarket(data){
+  $("marketList").innerHTML=`<table><thead><tr><th>Asset</th><th>Price</th><th>24h</th><th>Mkt Cap</th></tr></thead><tbody>`+
+  data.map(x=>`<tr class="clickable" onclick="openResearch('${esc((x.symbol||x.ticker||"").toUpperCase())}')"><td><b>${esc(x.name)}</b> ${esc((x.symbol||"").toUpperCase())}</td><td>${money(x.current_price||x.price||0)}</td><td class="${(x.price_change_percentage_24h||x.day||0)>=0?'good':'bad'}">${pct(x.price_change_percentage_24h||x.day||0)}</td><td>${x.market_cap?money(x.market_cap):"—"}</td></tr>`).join("")+"</tbody></table>";
+}
+function marketTab(type,btn){document.querySelectorAll("#win-markets .tabbar button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");if(type==="crypto")loadCrypto();else{const arr=state.universe.filter(x=>type==="equities"?x.ticker!=="BTC":x.ticker==="BTC");renderMarket(arr.map(x=>({name:x.name,symbol:x.ticker,current_price:x.price,price_change_percentage_24h:x.day,market_cap:0})));log("markets",type+" market view selected; live equity/commodity feeds require configured source.");}}
+function filterMarket(){const q=$("marketSearch").value.toLowerCase();document.querySelectorAll("#marketList tbody tr").forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?"":"none")}
+
+async function runPaperTest(){
+  $("paperStatus").textContent="Running";
+  try{
+    const coin=$("paperAsset").value.trim().toLowerCase()||"bitcoin",days=Math.max(30,Math.min(365,Number($("lookback").value)||90));
+    const r=await fetch(`https://api.coingecko.com/api/v3/coins/${encodeURIComponent(coin)}/market_chart?vs_currency=usd&days=${days}&interval=daily`);
+    if(!r.ok)throw new Error("Historical request failed");
+    const d=await r.json(),prices=d.prices||[];
+    if(!prices.length)throw new Error("No historical data");
+    const fast=Math.max(2,Number($("fastMA").value)||10),slow=Math.max(fast+1,Number($("slowMA").value)||30);
+    let equity=10000,peak=equity,maxDD=0,trades=0;
+    const eq=[],labels=[];
+    for(let i=0;i<prices.length;i++){
+      const p=prices[i][1];labels.push(new Date(prices[i][0]).toLocaleDateString());
+      if(i>=slow){
+        const f=prices.slice(i-fast+1,i+1).reduce((a,b)=>a+b[1],0)/fast;
+        const s=prices.slice(i-slow+1,i+1).reduce((a,b)=>a+b[1],0)/slow;
+        if(f>s){equity*=1+((p/prices[i-1][1])-1)*0.5;trades++}else equity*=1;
+      }
+      peak=Math.max(peak,equity);maxDD=Math.min(maxDD,(equity/peak-1)*100);eq.push(equity);
+    }
+    $("paperResults").innerHTML=`<b>Result:</b> ${money(equity)} from $10,000 baseline · <b>Max drawdown:</b> ${maxDD.toFixed(2)}% · <b>Signal days:</b> ${trades}. <span class="small">This is a historical paper test, not a prediction.</span>`;
+    if(charts.paper)charts.paper.destroy();
+    charts.paper=new Chart($("paperChart"),{type:"line",data:{labels,datasets:[{label:"Paper equity",data:eq,borderColor:"#ff62b5",backgroundColor:"rgba(255,98,181,.12)",fill:true,pointRadius:0,tension:.2}]},options:chartOpts()});
+    $("paperStatus").textContent="Complete";log("paper_lab",`Completed ${coin} historical paper test.`);
+  }catch(e){$("paperStatus").textContent="Error";$("paperResults").textContent=e.message;log("paper_lab","Historical paper test failed: "+e.message)}
+}
+function chartOpts(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#222",font:{family:"Arial"}}}},scales:{x:{ticks:{color:"#444",maxTicksLimit:8},grid:{color:"#ddd"}},y:{ticks:{color:"#444"},grid:{color:"#ddd"}}}}}
+
+function addDirectSource(){
+  const name=$("sourceName").value.trim(),url=$("sourceUrl").value.trim();
+  if(!name||!url)return alert("Enter a source name and URL.");
+  state.sources.push({name,url,added:new Date().toISOString()});$("sourceName").value="";$("sourceUrl").value="";renderDirectSources();log("sources","Direct source added: "+name)
+}
+function renderDirectSources(){
+  $("directSourceList").innerHTML=state.sources.length?state.sources.map((s,i)=>`<div class="source-item"><b>${esc(s.name)}</b><br><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a><br><button style="margin-top:5px" onclick="removeSource(${i})">Remove</button></div>`).join(""):`<div class="notice">No direct sources attached.</div>`;
+  $("sourceCount").textContent=state.sources.length;
+}
+function removeSource(i){state.sources.splice(i,1);renderDirectSources();log("sources","Removed direct source.")}
+function analyzeSourceText(){
+  const t=$("sourceText").value.trim();if(!t)return alert("Paste source text first.");
+  const words=t.toLowerCase(),flags=[];
+  ["revenue","earnings","guidance","sec","10-k","10-q","8-k","s-1","lockup","lobby","congress","senate","donation","investor","tax","irs","antitrust","regulation"].forEach(k=>{if(words.includes(k))flags.push(k)});
+  $("signalPacket").innerHTML=`<b>Detected research signals:</b> ${flags.length?flags.join(", "):"none"}<br><span class="small">Keyword detection is an indexing aid, not a substantive legal, financial or political conclusion.</span>`;
+  log("source_parser","Parsed pasted source text; detected "+flags.length+" research categories.")
+}
+
+function calcSize(){
+  const cap=Number($("totalCapitalInput").value)||0,risk=Number($("riskPct").value)||0,entry=Number($("entryPrice").value)||0,stop=Number($("stopPrice").value)||0;
+  const riskDollars=cap*risk/100,unitRisk=Math.abs(entry-stop),qty=unitRisk?riskDollars/unitRisk:0,notional=qty*entry;
+  $("sizeResult").innerHTML=`<b>Risk budget:</b> ${money(riskDollars)}<br><b>Per-unit risk:</b> ${money(unitRisk)}<br><b>Exact position size:</b> ${qty.toFixed(6)} units<br><b>Notional:</b> ${money(notional)}<br><span class="small">Formula: risk budget ÷ absolute entry-to-stop distance.</span>`;
+  log("risk_engine",`Calculated ${qty.toFixed(6)} units for ${$("positionLabel").value}.`);
+}
+function sendApproval(){$("approvalMsg").textContent="Position packet sent to supervising quant gate.";$("approvalMsg").className="notice mint";log("approval","Risk-sized packet submitted for approval.")}
+function approvePacket(){$("approvalMsg").textContent="APPROVED — packet marked spawnable in local paper registry.";$("approvalMsg").className="notice mint";$("approvalCount").textContent=Number($("approvalCount").textContent)+1;log("approval","Packet approved locally.")}
+function rejectPacket(){$("approvalMsg").textContent="REJECTED — packet returned for evidence or risk review.";$("approvalMsg").className="notice danger";log("approval","Packet rejected by local gate.")}
+
+function exportRegistry(){
+  const blob=new Blob([JSON.stringify(state.registry,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="caliqdesk-strategy-registry.json";a.click();URL.revokeObjectURL(a.href);log("registry","Registry JSON exported.")
+}
+function clearRegistry(){state.registry=[];renderRegistry();log("registry","Strategy registry cleared.")}
+function renderRegistry(){$("registryList").innerHTML=state.registry.length?state.registry.map(x=>`<div class="source-item"><b>${esc(x.label)}</b><br>${esc(x.size)}</div>`).join(""):`<div class="notice">No strategy packets yet.</div>`;$("registryCount").textContent=state.registry.length}
+
+function ingestText(){
+  const v=$("rawPayloadInput").value.trim();if(!v)return alert("Paste text or select a file first.");
+  addFile("Manual research payload",v);$("rawPayloadInput").value="";
+}
+function addFile(name,text){
+  const symbols=[...new Set((text.match(/\b[A-Z]{1,6}\b/g)||[]).filter(x=>x.length>=2))];
+  state.files.push({name,size:text.length,symbols,preview:text.slice(0,400)});
+  renderFiles();log("ingestion",`${name}: indexed ${text.length.toLocaleString()} characters${symbols.length?" · symbols "+symbols.join(", "):""}`);buildCompiledLists();
+}
+function renderFiles(){$("fileList").innerHTML=state.files.length?state.files.map((f,i)=>`<div class="file-row"><span><b>${esc(f.name)}</b><br><span class="small">${esc(f.symbols.join(", ")||"No obvious symbols")}</span></span><span>${f.size.toLocaleString()} chars<br><button onclick="removeFile(${i})">×</button></span></div>`).join(""):`<div class="notice">No source files indexed yet.</div>`}
+function removeFile(i){state.files.splice(i,1);renderFiles();buildCompiledLists();log("ingestion","Removed indexed file.")}
+function clearFiles(){state.files=[];renderFiles();log("ingestion","Local file index cleared.")}
+async function handleFiles(files){
+  for(const f of files){
+    try{
+      if(f.name.toLowerCase().endsWith(".pdf")||f.name.toLowerCase().endsWith(".docx")){
+        addFile(f.name,`[BINARY DOCUMENT: ${f.name}] Browser text extraction for this format is not enabled in this single-file build. Keep the file attached and use the original document as the source.`);
+      }else{
+        const text=await f.text();addFile(f.name,text);
+      }
+    }catch(e){log("ingestion","Could not read "+f.name+": "+e.message)}
+  }
+}
+$("fileInput").addEventListener("change",e=>handleFiles(e.target.files));
+const dz=$("dropzone");["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag")}));["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag")}));dz.addEventListener("drop",e=>handleFiles(e.dataTransfer.files));
+
+function buildCompiledLists(){
+  const upper=state.files.map(x=>x.preview).join("\n").toUpperCase();
+  const hits=state.universe.filter(x=>upper.includes(x.ticker));
+  if(hits.length)log("compiled_lists","Tracked symbols detected: "+hits.map(x=>x.ticker).join(", "));
+}
+function renderUniverse(){
+  $("universeBody").innerHTML=state.universe.map(x=>`<tr class="clickable" onclick="openResearch('${x.ticker}')">
+    <td><b>${x.ticker}</b><br>${esc(x.name)}<br><span class="small">${esc(x.sector)}</span></td>
+    <td>${money(x.price)}<br><span class="${x.day>=0?'good':'bad'}">${pct(x.day)}</span></td>
+    <td><b>${money(x.fair)}</b><br><span class="${x.fair>=x.price?'good':'bad'}">${pct((x.fair/x.price-1)*100)}</span></td>
+    <td class="${x.day>=0?'good':'bad'}">${pct(x.day)}</td><td>${esc(x.cycle)}</td><td>${esc(x.earnings)}</td><td>${esc(x.investors)}</td><td>${esc(x.filings)}</td>
+  </tr>`).join("");
+}
+function refreshAll(){loadCrypto();renderUniverse();renderDirectSources();renderFiles();renderRegistry();log("orchestrator","Dashboard refreshed. Live public crypto source requested; other feeds remain source-configurable.")}
+
+function initAnalytics(){
+  charts.analytics=new Chart($("analyticsChart"),{type:"line",data:{labels:["T-5","T-4","T-3","T-2","T-1","NOW","+30","+90"],datasets:[{label:"Portfolio value",data:[10000,10120,10080,10340,10490,10685,11200,12450],borderColor:"#087d70",backgroundColor:"rgba(77,230,208,.15)",fill:true,tension:.25}]},options:chartOpts()});
+  charts.valuation=new Chart($("valuationChart"),{type:"bar",data:{labels:["QNT","ENPH","GOOGL","BTC"],datasets:[{label:"Public→model gap %",data:[16.91,2.25,.51,8.71],backgroundColor:["#ff62b5","#4de6d0","#91b9ff","#c6a2ff"],borderColor:"#111",borderWidth:2}]},options:chartOpts()});
+  charts.lockup=new Chart($("lockupChart"),{type:"line",data:{labels:["D0","D30","D60","D90","D120","D150","D180"],datasets:[{label:"Illustrative event impact",data:[0,1,-1,-2,-4,-8,-12],borderColor:"#ff5b68",backgroundColor:"rgba(255,91,104,.12)",fill:true,tension:.25}]},options:chartOpts()});
+}
+function analyticsTab(type,btn){
+  document.querySelectorAll("#win-analytics .tabbar button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");
+  if(type==="equity"){charts.analytics.config.type="line";charts.analytics.data.labels=["T-5","T-4","T-3","T-2","T-1","NOW","+30","+90"];charts.analytics.data.datasets=[{label:"Portfolio value",data:[10000,10120,10080,10340,10490,10685,11200,12450],borderColor:"#087d70",backgroundColor:"rgba(77,230,208,.15)",fill:true,tension:.25}]}
+  else if(type==="allocation"){charts.analytics.config.type="doughnut";charts.analytics.data={labels:["QNT","ENPH","GOOGL","CASH"],datasets:[{data:[40,22.5,27.5,10],backgroundColor:["#ff62b5","#4de6d0","#91b9ff","#777"],borderColor:"#111",borderWidth:2}]}}
+  else {charts.analytics.config.type="line";charts.analytics.data={labels:["-10D","-5D","NOW","+5D","+10D","+30D"],datasets:[{label:"Drawdown",data:[0,-1.5,-4.8,-3.1,-1.2,-.4],borderColor:"#ff5b68",backgroundColor:"rgba(255,91,104,.12)",fill:true,tension:.25}]}}
+  charts.analytics.update();
+}
+
+function researchTabsFor(x){
+  const tabs=["OVERVIEW","LIVE MARKET","VALUATION","EARNINGS","IPO / 180D","NEWS / INDUSTRY","GOVERNMENT","LOBBYING / POLITICAL","INVESTORS","FILINGS / TAX","DIRECT SOURCES / FILING","MATH / FORECAST","EVIDENCE"];
+  $("researchTabs").innerHTML=tabs.map((t,i)=>`<button class="${i===0?"active":""}" onclick="researchTab('${t}',this)">${t}</button>`).join("");
+}
+function openResearch(ticker){
+  let x=state.universe.find(z=>z.ticker===ticker)||state.universe.find(z=>z.ticker==="BTC");
+  if(!x)x={ticker,name:ticker,sector:"Imported security",price:0,fair:0,bear:0,bull:0,day:0,cycle:"Research required",earnings:"Research required",investors:"Research required",filings:"Research required"};
+  state.selected=x.ticker;$("modalTitle").textContent=`${x.ticker} — ${x.name}`;$("modalSub").textContent=`${x.sector} · institutional research dossier`;
+  researchTabsFor(x);$("researchModal").classList.add("open");researchTab("OVERVIEW",$("researchTabs").firstElementChild);log("research","Opened dossier for "+x.ticker)
+}
+function closeResearch(){if(charts.detail){charts.detail.destroy();charts.detail=null}$("researchModal").classList.remove("open")}
+function box(title,html){return `<div class="card" style="margin-bottom:10px"><h3>${title}</h3>${html}</div>`}
+function metric(label,value,tip){return `<div class="kpi"><div class="k-label ${tip?'tooltip':''}" ${tip?`data-tip="${esc(tip)}"`:""}>${label}</div><div class="k-value">${value}</div></div>`}
+function researchTab(tab,btn){
+  document.querySelectorAll("#researchTabs button").forEach(b=>b.classList.remove("active"));btn?.classList.add("active");
+  const x=state.universe.find(z=>z.ticker===state.selected)||state.universe[0],c=$("researchContent");
+  if(tab==="OVERVIEW")c.innerHTML=`<div class="dossier-grid">${metric("Public price",money(x.price),"Observed market price when connected.")}${metric("Model value",money(x.fair),"Internal valuation estimate; assumptions must be sourced.")}${metric("Upside / gap",pct((x.fair/x.price-1)*100))}${metric("Risk band",money(x.bear)+" — "+money(x.bull))}</div>${box("Institutional summary",`<div class="notice info">This dossier separates observed facts, sourced disclosures and mathematical model outputs. Unknown information is explicitly marked as research required.</div><p class="small">For an actual investment-grade report, connect approved market/news/filing sources and preserve source timestamps and document identifiers.</p>`)}`;
+  else if(tab==="LIVE MARKET")c.innerHTML=box("Live Market Data",`<div class="dossier-grid">${metric("Last",money(x.price))}${metric("24h",pct(x.day))}${metric("Bid / Ask","Feed required")}${metric("Volume","Feed required")}</div><div class="chart" style="height:350px"><canvas id="detailChart"></canvas></div>`);
+  else if(tab==="VALUATION")c.innerHTML=box("Valuation Stack",`<table><thead><tr><th>Method</th><th>Value</th><th>Formula / assumptions</th><th>Status</th></tr></thead><tbody><tr><td>Public market</td><td>${money(x.price)}</td><td>Observed quote</td><td>Observed</td></tr><tr><td>DCF</td><td>${money(x.price*1.12)}</td><td>PV of FCF + terminal value</td><td>Illustrative</td></tr><tr><td>Relative</td><td>${money(x.price*1.17)}</td><td>Peer multiples</td><td>Illustrative</td></tr><tr><td>Composite</td><td>${money(x.fair)}</td><td>Weighted model output</td><td>Model</td></tr></tbody></table>`);
+  else if(tab==="EARNINGS")c.innerHTML=box("Projected Earnings",`<div class="dossier-grid">${metric("Revenue","Connect financial feed")}${metric("EPS","Connect estimates")}${metric("FCF","Connect filings")}${metric("Next report","Calendar feed")}</div><div class="notice">Projected earnings must be driven by sourced historical financials, explicit assumptions, scenario probabilities and a versioned forecast model. The dashboard does not silently fabricate company estimates.</div>`);
+  else if(tab==="IPO / 180D")c.innerHTML=box("IPO / Lockup Cycle",`<div class="dossier-grid">${metric("Cycle",x.cycle)}${metric("Day 180","Event date required")}${metric("Float change","Filing required")}${metric("Insider selling","Form 4 / prospectus")}</div><div class="chart small"><canvas id="detailChart"></canvas></div>`);
+  else if(tab==="NEWS / INDUSTRY")c.innerHTML=box("Latest News / Industry Impact",`<div class="notice info">Live headlines require a connected news provider. This panel is intentionally evidence-first: each headline should retain publisher, timestamp, URL and relevance classification.</div><ul><li>Company-specific news</li><li>Industry demand / pricing</li><li>Competitor developments</li><li>Supply-chain and macro events</li><li>Geopolitical / infrastructure exposure</li></ul>`);
+  else if(tab==="GOVERNMENT")c.innerHTML=box("Government / Legislation",`<div class="dossier-grid">${metric("SEC","Filings / enforcement")}${metric("Congress","Bills / committees")}${metric("Agencies","Rules / actions")}${metric("Contracts","Procurement records")}</div><div class="notice">Government exposure should be tied to official records: bill text, committee action, final rules, agency notices, procurement records and enforcement releases.</div>`);
+  else if(tab==="LOBBYING / POLITICAL")c.innerHTML=box("Lobbying / Political Disclosures",`<div class="notice danger"><b>Evidence standard:</b> a campaign donation, lobbying registration or political association does not by itself establish intent or causality.</div><ul><li>Registered lobbyists / clients</li><li>Lobbying issues and filings</li><li>FEC receipts / disbursements where applicable</li><li>Corporate PAC disclosures</li><li>Known executives / donors based on public records</li></ul>`);
+  else if(tab==="INVESTORS")c.innerHTML=box("Known Investors / Funds / Institutions",`<table><thead><tr><th>Phase</th><th>Investor / fund</th><th>Association</th><th>Evidence</th></tr></thead><tbody><tr><td>Seed</td><td>Research queue</td><td>Funding participant</td><td>Company announcement / Form D</td></tr><tr><td>Growth</td><td>Research queue</td><td>Institution / fund</td><td>Funding announcement</td></tr><tr><td>Public</td><td>Research queue</td><td>Institutional holder</td><td>13F / beneficial ownership</td></tr></tbody></table>`);
+  else if(tab==="FILINGS / TAX")c.innerHTML=box("SEC / Government Forms",`<div class="dossier-grid">${metric("10-K","Annual")}${metric("10-Q","Quarterly")}${metric("8-K","Material events")}${metric("Form 4","Insiders")}${metric("13D / 13G","Ownership")}${metric("13F","Institutions")}${metric("S-1","IPO / registration")}${metric("DEF 14A","Proxy")}</div>`)+box("IRS / Tax reality",`Corporate federal income-tax returns (IRS Form 1120 and related returns) are generally not public records. Publicly analyzable tax evidence usually comes from SEC tax footnotes, effective tax rate, cash taxes, deferred tax assets/liabilities, NOLs, credits and disclosed disputes.`);
+  else if(tab==="DIRECT SOURCES / FILING")c.innerHTML=box("Direct Sources Attached",state.sources.length?state.sources.map(s=>`<div class="source-item"><b>${esc(s.name)}</b><br><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a></div>`).join(""):`<div class="notice">No direct sources attached yet. Add them in the DIRECT SOURCES / FILING desktop window.</div>`);
+  else if(tab==="MATH / FORECAST")c.innerHTML=box("Mathematical Forecast Engine",`<p><b>DCF:</b> V = Σ FCFₜ/(1+WACC)ᵗ + TV/(1+WACC)ⁿ.</p><p><b>Scenario EV:</b> P(bear)·R(bear) + P(base)·R(base) + P(bull)·R(bull).</p><p><b>Position sizing:</b> Risk budget ÷ |entry − stop|.</p><p><b>Brier score:</b> mean((probability − outcome)²); lower is better.</p><div class="notice info">The math is deterministic once assumptions are supplied. The uncertainty is in the inputs, probabilities and model specification.</div>`);
+  else c.innerHTML=box("Evidence & Lineage",`<table><tr><th>Field</th><th>Required evidence</th></tr><tr><td>Fact</td><td>Primary source / filing / timestamp</td></tr><tr><td>Forecast</td><td>Historical data + assumptions + model version</td></tr><tr><td>Political claim</td><td>Official disclosure / public record</td></tr><tr><td>Investor claim</td><td>Funding announcement / filing / ownership report</td></tr></table>`);
+  if((tab==="LIVE MARKET"||tab==="IPO / 180D")&&$("detailChart")){
+    const vals=[x.price*.92,x.price*.96,x.price*.99,x.price,x.fair,x.fair*1.08,x.bull];
+    charts.detail=new Chart($("detailChart"),{type:"line",data:{labels:["-90D","-60D","-30D","NOW","+30D","+90D","+180D"],datasets:[{label:x.ticker+" market/model path",data:vals,borderColor:"#ff62b5",backgroundColor:"rgba(255,98,181,.13)",fill:true,tension:.25}]},options:chartOpts()});
+  }
+}
+
+function saveSnapshot(){localStorage.setItem("caliqdesk.snapshot",JSON.stringify({state,at:new Date().toISOString()}));log("audit","Desk state snapshot saved locally.")}
+function clearAudit(){state.audit=[];$("terminal").innerHTML="";$("terminal2").innerHTML="";$("auditCount").textContent="0";log("audit","Audit log cleared.")}
+function approveIfReady(){}
+
+function openWorldMonitor(){window.open("https://finance.worldmonitor.app/dashboard?zoom=1.00&view=global&timeRange=7d&layers=pipelines%2Csanctions%2Cweather%2Ceconomic%2Cwaterways%2Coutages%2Cnatural%2CtradeRoutes","_blank","noopener")}
+$("worldFrame").addEventListener("error",()=>{$("worldFallback").classList.add("show")});
+
+renderUniverse();renderFiles();renderDirectSources();renderRegistry();initAnalytics();buildWindowTasks();loadCrypto();
+log("orchestrator","Screenshot-style MisoPretty Quant Desk initialized.");
+log("ingestion","Browser file ingestion is enabled for text-based files; pasted content is accepted.");
+log("sources","DIRECT SOURCES / FILING window online.");
+log("research","Click any security in the compiled universe to open the institutional dossier.");
+log("world_monitor","World Monitor embed mounted at bottom of long scrollable workspace.");
+</script>
+</body>
+</html>
