@@ -1,2 +1,9 @@
-# 1stDRAFT DOES NOT WORK, DO NOT USE
-1STDRAFT
+# Pretty Desk First Draft
+
+Keys save locally on your PC
+
+
+Deploy from branch
+-main
+-root
+-save
