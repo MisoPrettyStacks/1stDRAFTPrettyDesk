@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CaliQDesk — MisoPretty Quant Desk</title>
+<title>CaliQDesk — MisoPretty Pretty Desk</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
 <style>
 :root{
@@ -159,7 +159,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
 <body>
 <div class="desktop">
   <header class="desk-top">
-    <div class="brand"><span class="brand-icon"></span><span>MisoPretty's Quant Desk</span><span class="pill">CALIQDESK // </span></div>
+    <div class="brand"><span class="brand-icon"></span><span>MisoPretty's Pretty Desk</span><span class="pill">CALIQDESK // </span></div>
     <div class="top-actions">
       <span class="pill"><span class="status"></span><span id="dataState">PAPER / LOCAL</span></span>
       <span id="sysClock"></span>
@@ -224,7 +224,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
     </section>
 
     <section id="win-approval" class="window" style="left:1460px;top:0;width:360px;height:330px">
-      <div class="window-header"><div class="window-title"><span class="window-app"></span>SUPERVISING QUANT GATE</div><div class="window-controls"><button onclick="minWin('win-approval')">−</button><button onclick="maxWin('win-approval')">□</button><button onclick="closeWin('win-approval')">×</button></div></div>
+      <div class="window-header"><div class="window-title"><span class="window-app"></span>SUPERVISING Pretty GATE</div><div class="window-controls"><button onclick="minWin('win-approval')">−</button><button onclick="maxWin('win-approval')">□</button><button onclick="closeWin('win-approval')">×</button></div></div>
       <div class="window-body">
         <div class="card"><h3>Approval protocol</h3>
           <label><input class="check" type="checkbox"> Evidence packet attached</label>
@@ -386,7 +386,7 @@ tr.clickable{cursor:pointer}tr.clickable:hover{background:#eafffa}
 </div>
 
 <div class="taskbar">
-  <span class="brand-mini">MisoPretty's Quant Desk</span>
+  <span class="brand-mini">MisoPretty's Pretty Desk</span>
   <span id="taskClock" class="pill"></span>
   <button class="task-btn" onclick="showAll()">Show All</button>
   <span id="windowTasks" style="display:flex;gap:6px;align-items:center"></span>
@@ -399,7 +399,7 @@ const state={
   files:[],sources:[],audit:[],registry:[],
   research:{endpoint:"/api/research",status:"idle",lastRun:null,lastError:null,queue:[]},
   universe:[
-    {ticker:"QNT",name:"Quantinuum",sector:"Quantum Computing",price:49.95,fair:58.40,bear:45,bull:96,day:0.84,cycle:"Private / IPO monitor",earnings:"Model queue",investors:"Funding records queue",filings:"SEC / IPO watch"},
+    {ticker:"QNT",name:"Prettyinuum",sector:"Prettyum Computing",price:49.95,fair:58.40,bear:45,bull:96,day:0.84,cycle:"Private / IPO monitor",earnings:"Model queue",investors:"Funding records queue",filings:"SEC / IPO watch"},
     {ticker:"ENPH",name:"Enphase Energy",sector:"Solar / Energy",price:37.26,fair:38.10,bear:28,bull:65,day:-0.42,cycle:"Public",earnings:"Estimate queue",investors:"13F / holders",filings:"10-K / 10-Q / 8-K"},
     {ticker:"GOOGL",name:"Alphabet",sector:"Internet / AI",price:346.74,fair:348.50,bear:290,bull:410,day:0.67,cycle:"Public",earnings:"Estimate queue",investors:"13F / holders",filings:"10-K / 10-Q / 8-K"},
     {ticker:"BTC",name:"Bitcoin",sector:"Digital Asset",price:78188,fair:85000,bear:62000,bull:110000,day:0.56,cycle:"N/A",earnings:"N/A",investors:"ETF / ",filings:"Public disclosures"}
@@ -686,7 +686,7 @@ function calcSize(){
   $("sizeResult").innerHTML=`<b>Risk budget:</b> ${money(riskDollars)}<br><b>Per-unit risk:</b> ${money(unitRisk)}<br><b>Exact position size:</b> ${qty.toFixed(6)} units<br><b>Notional:</b> ${money(notional)}<br><span class="small">Formula: risk budget ÷ absolute entry-to-stop distance.</span>`;
   log("risk_engine",`Calculated ${qty.toFixed(6)} units for ${$("positionLabel").value}.`);
 }
-function sendApproval(){$("approvalMsg").textContent="Position packet sent to supervising quant gate.";$("approvalMsg").className="notice mint";log("approval","Risk-sized packet submitted for approval.")}
+function sendApproval(){$("approvalMsg").textContent="Position packet sent to supervising Pretty gate.";$("approvalMsg").className="notice mint";log("approval","Risk-sized packet submitted for approval.")}
 function approvePacket(){$("approvalMsg").textContent="APPROVED — packet marked spawnable in local paper registry.";$("approvalMsg").className="notice mint";$("approvalCount").textContent=Number($("approvalCount").textContent)+1;log("approval","Packet approved locally.")}
 function rejectPacket(){$("approvalMsg").textContent="REJECTED — packet returned for evidence or risk review.";$("approvalMsg").className="notice danger";log("approval","Packet rejected by local gate.")}
 
@@ -839,7 +839,7 @@ $("worldFrame").addEventListener("error",()=>{$("worldFallback").classList.add("
 
 const restored=restoreState();
 renderUniverse();renderFiles();renderDirectSources();renderRegistry();initAnalytics();buildWindowTasks();buildCompiledLists();loadCrypto();
-log("orchestrator",restored?"Persisted CaliQDesk state restored.":"Screenshot-style MisoPretty Quant Desk initialized.");
+log("orchestrator",restored?"Persisted CaliQDesk state restored.":"Screenshot-style MisoPretty Pretty Desk initialized.");
 log("ingestion","Browser file ingestion is enabled for text-based files; pasted content is accepted.");
 log("sources","DIRECT SOURCES / FILING window online.");
 log("research","Click any security in the compiled universe to open the  dossier.");
