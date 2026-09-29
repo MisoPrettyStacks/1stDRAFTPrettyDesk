@@ -88,3 +88,8 @@ A single-page, window-based "desk operating system" for personal market research
 ## Status
 
 🚧 **First draft / active research experiment.** Panels, data sources, and the approval workflow are still evolving.
+
+Made with 💖 by:
+[@MisoPrettyStacks](https://github.com/MisoPrettyStacks)
+
+@IGotGlitterOnMe on X
