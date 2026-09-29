@@ -10,6 +10,12 @@
 
 ---
 
+
+<img width="1912" height="841" alt="desk" src="https://github.com/user-attachments/assets/a3fd668b-feaa-4874-b27a-dc4f9df150ad" />
+
+
+---
+
 # Pretty Desk First Draft
 
 Keys save locally on your PC
